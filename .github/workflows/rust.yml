@@ -1,0 +1,35 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Format
+      run: cargp fmt --all --check
+    - name: Build 
+      run: |
+        for package in $(ls lab*) do
+          (cd $package && cargo build --verbose)
+        done
+    - name: Clippy 
+      run: |
+        for package in $(ls lab*) do
+          (cd $package && cargo clippy --verbose)
+        done
+    - name: Tests 
+      run: |
+        for package in $(ls lab*) do
+          (cd $package && cargo test --verbose)
+        done
