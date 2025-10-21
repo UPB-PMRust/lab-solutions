@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: |
           for package in $(ls -d lab*); do
-            (cd $package && cargo build --bins)
+            (cd $package && cargo build)
           done
       - name: Clippy
         run: |
