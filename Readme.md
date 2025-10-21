@@ -3,7 +3,7 @@ This repository has the solutions for the labs.
 
 As there are multiple exercises, we chose to split them into multiple binaries. To flash and run them, run `cargo run --bin <name_of_binary>` (without the `.rs` extension).
 
-**Note** Please open each solution folder separately.
+**Note** Please open the whole workspace, not only a single solution (folder) separately.
 
 ```shell
 lab-solutions
