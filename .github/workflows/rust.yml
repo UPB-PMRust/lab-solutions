@@ -25,11 +25,11 @@ jobs:
         done
     - name: Clippy 
       run: |
-        for package in $(ls lab*) do
+        for package in $(ls -d lab*); do
           (cd $package && cargo clippy --verbose)
         done
     - name: Tests 
       run: |
-        for package in $(ls lab*) do
+        for package in $(ls -d lab*); do
           (cd $package && cargo test --verbose)
         done
