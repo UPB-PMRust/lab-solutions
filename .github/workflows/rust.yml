@@ -20,8 +20,8 @@ jobs:
       run: cargo fmt --all --check
     - name: Build 
       run: |
-        for package in $(ls lab*) do
-          (cd $package && cargo build --verbose)
+        for package in $(ls -d lab*); do
+          (cd $package && cargo build --verbose --bins)
         done
     - name: Clippy 
       run: |
