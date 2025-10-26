@@ -24,7 +24,7 @@ async fn main(_spawner: Spawner) {
         led.set_high();
         // Make sure you do not forget this delay. Without it,
         // the LED won’t appear to blink: it would just turn off and
-        // immediately back on at the beginning od the the next loop cycle.
+        // immediately back on at the beginning of the the next loop cycle.
         Timer::after_millis(300).await;
     }
 }
