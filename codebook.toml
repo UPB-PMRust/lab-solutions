@@ -1,8 +1,12 @@
 words = [
     "defmt",
     "eabihf",
+    "linker's",
     "mcu",
+    "nmagic",
     "semihosting",
     "stm",
+    "tdefmt",
     "thumbv",
+    "tlink",
 ]
