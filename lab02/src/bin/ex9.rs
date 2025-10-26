@@ -110,22 +110,25 @@ async fn main(_spawner: Spawner) {
         // make it uppercase
         let letter = letter.to_ascii_uppercase();
         // verify if the character is in between A and Z
-        if letter > 'A' && letter < 'Z' {
+        // (a..b) means the interval [a to b) - excluding b
+        // (a..=b) means the interval [a to b] - including b
+        if ('A'..='Z').contains(&letter) {
             // We have to compute the position of the morse code in the
             // MORSE array. Position 0 is A, position 1 is B and so on.
             //
             // Characters (char) cannot be subtracted, as they are not
-            // simple value, they use UTF-8. ASCII characters are always
-            // represented on 7 bits and fit in an `u8` which we can
-            // subtract.
+            // simple value, they use UTF-8 codes. Some of the codes
+            // might not have an *alphabetical order* - emojis for instance.
+            // ASCII characters are always in *alphabetical order* so it is
+            // safe to subtract them to find the *distance* between two
+            // letters.
             //
-            // We convert the letter, that we know is an ASCII character, to
-            // `u8` and subtract the `u8` value of A (b`A` means the ASCII
-            // representation of A in `u8`).
+            // We convert the letter to `usize` and subtract
+            // value of `A` (converted to `usize`).
             //
-            // Rust requires arrays to use `usize` indices, so we convert
-            // the `u8` position that we have computed to a `usize`.
-            let letter_position = (letter as u8 - b'A') as usize;
+            // Rust requires arrays to use `usize` indices, we can use
+            // the subtraction directly.
+            let letter_position = letter as usize - 'A' as usize;
 
             // Display every symbol of the MORSE code
             for symbol in MORSE[letter_position].chars() {
