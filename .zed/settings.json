@@ -2,9 +2,10 @@
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
-        "cargo": {
+        "check": {
           "target": "thumbv8m.main-none-eabihf",
-          "allTargets": false
+          "allTargets": false,
+          "workspace": false
         }
       }
     }
