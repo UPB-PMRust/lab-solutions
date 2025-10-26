@@ -4,3 +4,4 @@ name = "rust"
 [language-server.rust-analyzer.config.check]
 targets = ["thumbv8m.main-none-eabihf"]
 allTargets = false
+workspace = false

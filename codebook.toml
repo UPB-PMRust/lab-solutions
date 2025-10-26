@@ -1,0 +1,16 @@
+words = [
+    "boostrap",
+    "chrono",
+    "defmt",
+    "eabihf",
+    "exti",
+    "linker's",
+    "mcu",
+    "nmagic",
+    "semihosting",
+    "stm",
+    "tdefmt",
+    "thumbv",
+    "tlink",
+    "uptime",
+]
