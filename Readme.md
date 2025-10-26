@@ -5,6 +5,9 @@ As there are multiple exercises, we chose to split them into multiple binaries. 
 
 **Note** Please open the whole workspace, not only a single solution (folder) separately.
 
+To build the solutions, enter the requested lab
+folder and run `cargo build` and `cargo run`.
+
 ```shell
 lab-solutions
 ├── lab01 -> Debug
