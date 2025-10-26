@@ -47,8 +47,8 @@ const MORSE: [&str; 26] = [
 /// to be stated `Output<`_`>`. As it is not relevant for the function,
 /// the unknown lifetime `'_` is used here.
 async fn display_symbol(leds: &mut [Output<'_>; 3], morse_symbol: char) {
-    // The LEDs on the lab board ar active LOW, meaning they turn on when
-    // the pin is set to LOW and turn off when the pin is set to HIGH.
+    // The LEDs on the lab board are active LOW: they light up when the
+    // pin is LOW and turn off when the pin is HIGH.
     match morse_symbol {
         '.' => {
             leds[0].set_high();
@@ -85,9 +85,9 @@ async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
     info!("Device started");
 
-    // The LEDs on the lab board are active LOW, meaning the light up when the pin is LOW
-    // and turn off when the pin is LOW. We set the initial value of the pin to HIGH
-    // to turn off the LED.
+    // The LEDs on the lab board are active LOW: they light up when the pin is LOW
+    // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
+    // so that the LED are turned off when the pins are setup.
 
     // The three LEDs are connected to D8 (PC7), D9 (PC6) and D10 (PC9).
     let mut leds = [

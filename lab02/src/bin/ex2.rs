@@ -13,15 +13,16 @@ async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
     info!("Device started");
 
-    // The LEDs on the lab board are active LOW, meaning the light up when the pin is LOW
-    // and turn off when the pin is LOW. We set the initial value of the pin to HIGH
-    // to turn off the LED.
+    // The LEDs on the lab board are active LOW: they light up when the pin is LOW
+    // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
+    // so that the LED are turned off when the pins are setup.
     let mut led = Output::new(peripherals.PC7, Level::High, Speed::Low);
     led.set_low();
 
-    // When the `main` function exists, `embassy` resets all the pins
-    // and we will not see the LED on.
-    // The loop prevents the `main` function from existing.
+    // When the `main` function exits, Embassy resets all the pins
+    // and the LED turns off immediately.
+    // The infinite loop prevents the `main` function from
+    // exiting so that the LED stays on.
     loop {
         // It is a good idea to place a delay inside this loop,
         // otherwise the MCU will execute an empty loop and

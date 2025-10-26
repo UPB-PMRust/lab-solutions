@@ -19,9 +19,9 @@ async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
     info!("Device started");
 
-    // The LEDs on the lab board are active LOW, meaning the light up when the pin is LOW
-    // and turn off when the pin is LOW. We set the initial value of the pin to HIGH
-    // to turn off the LED.
+    // The LEDs on the lab board are active LOW: they light up when the pin is LOW
+    // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
+    // so that the LED are turned off when the pins are setup.
     let mut led = Output::new(peripherals.PC7, Level::High, Speed::Low);
 
     // The buttons on the lab board have an external pull up resistor (soldered

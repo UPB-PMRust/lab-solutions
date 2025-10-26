@@ -13,8 +13,8 @@ use panic_probe as _;
 /// The function uses mutable references to the LEDs, as `set_high` and
 /// `set_low` required mutable borrows (references).
 fn set_red(red: &mut Output, yellow: &mut Output, green: &mut Output) {
-    // The LEDs on the lab board ar active LOW, meaning they turn on when
-    // the pin is set to LOW and turn off when the pin is set to HIGH.
+    // The LEDs on the lab board are active LOW: they light up when the
+    // pin is LOW and turn off when the pin is HIGH.
     red.set_low();
     yellow.set_high();
     green.set_high();
@@ -25,6 +25,8 @@ fn set_red(red: &mut Output, yellow: &mut Output, green: &mut Output) {
 /// The function uses mutable references to the LEDs, as `set_high` and
 /// `set_low` required mutable borrows (references).
 fn set_yellow(red: &mut Output, yellow: &mut Output, green: &mut Output) {
+    // The LEDs on the lab board are active LOW: they light up when the
+    // pin is LOW and turn off when the pin is HIGH.
     red.set_high();
     yellow.set_low();
     green.set_high();
@@ -35,6 +37,8 @@ fn set_yellow(red: &mut Output, yellow: &mut Output, green: &mut Output) {
 /// The function uses mutable references to the LEDs, as `set_high` and
 /// `set_low` required mutable borrows (references).
 fn set_green(red: &mut Output, yellow: &mut Output, green: &mut Output) {
+    // The LEDs on the lab board are active LOW: they light up when the
+    // pin is LOW and turn off when the pin is HIGH.
     red.set_high();
     yellow.set_high();
     green.set_low();
@@ -45,9 +49,9 @@ async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
     info!("Device started");
 
-    // The LEDs on the lab board are active LOW, meaning the light up when the pin is LOW
-    // and turn off when the pin is LOW. We set the initial value of the pin to HIGH
-    // to turn off the LED.
+    // The LEDs on the lab board are active LOW: they light up when the pin is LOW
+    // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
+    // so that the LED are turned off when the pins are setup.
 
     // The red LED is connected to D8 (PC7).
     let mut red = Output::new(peripherals.PC7, Level::High, Speed::Low);
