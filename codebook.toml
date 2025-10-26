@@ -1,6 +1,9 @@
 words = [
+    "boostrap",
+    "chrono",
     "defmt",
     "eabihf",
+    "exti",
     "linker's",
     "mcu",
     "nmagic",
@@ -9,4 +12,5 @@ words = [
     "tdefmt",
     "thumbv",
     "tlink",
+    "uptime",
 ]

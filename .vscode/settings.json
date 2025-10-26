@@ -5,5 +5,9 @@
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
-  }
+  },
+  "cSpell.words": [
+    "Boostrap",
+    "defmt"
+  ]
 }
