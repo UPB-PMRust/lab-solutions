@@ -36,7 +36,10 @@ fn main() {
     // `memory.x` is changed.
     // println!("cargo:rerun-if-changed=memory.x");
 
+    // Prevent the linker from page aligning segments
     println!("cargo:rustc-link-arg-bins=--nmagic");
+
+    // Required for `cortex-m`
     println!("cargo:rustc-link-arg-bins=-Tlink.x");
     // Required for `defmt`
     println!("cargo:rustc-link-arg-bins=-Tdefmt.x");
