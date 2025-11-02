@@ -169,7 +169,7 @@ async fn main(_spawner: Spawner) {
                 // Set GREEN to 30%
                 //
                 // Ideally it should be 100%, but the LED on the lab board
-                // shows yellow-ish color when using 100% or RED and 30%
+                // shows yellow-ish color when using 100% of RED and 30%
                 // of green.
                 green_ch.set_duty_cycle_percent(30);
                 // Set BLUE to 0%
@@ -185,7 +185,7 @@ async fn main(_spawner: Spawner) {
             }
         }
 
-        // NOTE: As the blue channel is always 0% in the exercise,
+        // NOTE: As the blue PWM channel is always 0% in the exercise,
         //       instead of using PWM for BLUE, we could connect
         //       the BLUE pin of the LED to VCC
 
