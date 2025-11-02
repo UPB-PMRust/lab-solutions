@@ -1,13 +1,10 @@
 {
-  "rust-analyzer.check.allTargets": false,
+  "rust-analyzer.cargo.allTargets": false,
   "rust-analyzer.check.workspace": false,
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
   },
-  "cSpell.words": [
-    "Boostrap",
-    "defmt"
-  ]
+  "cSpell.words": ["Boostrap", "defmt"]
 }
