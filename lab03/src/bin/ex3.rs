@@ -19,6 +19,9 @@ use embassy_time::Timer;
 use panic_probe as _;
 
 /// Stores the current LED color
+///
+/// #[derive(Format)] is required to be abel to
+/// print this using the `defmt` formatter ({})
 #[derive(Format)]
 enum LedColor {
     Red,
