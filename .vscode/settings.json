@@ -6,5 +6,9 @@
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
   },
-  "cSpell.words": ["Boostrap", "defmt"]
+  "cSpell.words": [
+    "Boostrap",
+    "defmt",
+    "MODER"
+  ]
 }
