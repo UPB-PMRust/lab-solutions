@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::info;
+use defmt::{debug, info};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::{
@@ -24,7 +24,7 @@ async fn main(_spawner: Spawner) {
     info!("Device started");
 
     // The LED is connected on pin D3 (PB3)
-
+    //
     // PB3 can be connected for PWM to Channel 2 of TIM 2
     // The `PwmPin` sets the correct configuration of the MODER and
     // the Alternate Function of the pin PB3.
@@ -59,7 +59,7 @@ async fn main(_spawner: Spawner) {
 
     // The potentiometer is connected to A0 (PA0)
     //
-    // Pin PA0 can be connected ADC1's Channel 5
+    // Pin A0 (PA0) can be connected ADC1's Channel 5
     let mut adc1 = Adc::new(peripherals.ADC1);
 
     // Set the resolution of ADC1 to 14 bits
@@ -87,6 +87,12 @@ async fn main(_spawner: Spawner) {
         // We convert the final value to a `u8` as it is a percentage and we
         // are sure that it fits.
         let percentage = (potentiometer_value as u32 * 100 / MAX_VALUE) as u8;
+
+        // Display the light's intensity and percentage
+        debug!(
+            "Potentiometer value {} / LED intensity {}%",
+            potentiometer_value, percentage
+        );
 
         // Set the duty cycle to control the LED's intensity
         ch2.set_duty_cycle_percent(percentage);

@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::info;
+use defmt::{debug, info};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::{
@@ -46,25 +46,25 @@ async fn main(_spawner: Spawner) {
     // Enable PWM for TIM2
     // only Channels 2 and 3 will be used
     // and connected to pin PB3 and PB10
-    let pwm1 = SimplePwm::new(
+    let pwm2 = SimplePwm::new(
         peripherals.TIM2,   // Timer 2 peripheral
         None,               // Channel 1 not used
         Some(red_pwm_pin),  // Channel 2 output (PB3)
         Some(blue_pwm_pin), // Channel 3 output (PB10)
         None,               // Channel 4 not used
-        khz(1),             // PWM frequency = 1 kHz
+        khz(100),           // PWM frequency = 100 kHz
         Default::default(), // Default configuration
     );
 
     // Enable PWM for TIM3
     // only Channel 1 will be used and connected to pin PB4
-    let mut pwm2 = SimplePwm::new(
-        peripherals.TIM3,    // Timer 2 peripheral
+    let mut pwm3 = SimplePwm::new(
+        peripherals.TIM3,    // Timer 3 peripheral
         Some(green_pwm_pin), // Channel 1 output (PB4)
         None,                // Channel 2 not used
         None,                // Channel 3 not used
         None,                // Channel 4 not used
-        khz(1),              // PWM frequency = 1 kHz
+        khz(100),            // PWM frequency = 100 kHz
         Default::default(),  // Default configuration
     );
 
@@ -84,15 +84,15 @@ async fn main(_spawner: Spawner) {
     // To overcome this, the PWM peripheral provides a function called
     // `split` that allows us to receive all the 4 channels with one
     // single borrow.
-    let pwm1_channels = pwm1.split();
+    let pwm2_channels = pwm2.split();
 
     // Get a mutable reference to channel 2 of TIM 2 to control it
-    let mut red_ch = pwm1_channels.ch2;
-    // Get a reference to channel 2 of TIM 3 to control it
-    let mut green_ch = pwm2.ch2();
+    let mut red_ch = pwm2_channels.ch2;
+    // Get a reference to channel 1 of TIM 3 to control it
+    let mut green_ch = pwm3.ch1();
 
     // Get a mutable reference to channel 3 of TIM 2 to control it
-    let mut blue_ch = pwm1_channels.ch3;
+    let mut blue_ch = pwm2_channels.ch3;
 
     // Start PWM on the channels
     red_ch.enable();
@@ -112,7 +112,7 @@ async fn main(_spawner: Spawner) {
 
     // The light sensor is connected to A0 (PA0)
     //
-    // Pin PA0 can be connected ADC1's Channel 5
+    // Pin A0 (PA0) can be connected ADC1's Channel 5
     let mut adc1 = Adc::new(peripherals.ADC1);
 
     // Set the resolution of ADC1 to 14 bits
@@ -130,9 +130,6 @@ async fn main(_spawner: Spawner) {
         // Read channel 5 (pin PA0)
         let light_value = adc1.blocking_read(&mut peripherals.PA0);
 
-        // Display the light's intensity
-        info!("Light value {}", light_value);
-
         // Convert the sampled value in percentage:
         //
         // - 0 means 0%
@@ -143,6 +140,9 @@ async fn main(_spawner: Spawner) {
         // We convert the final value to a `u8` as it is a percentage and we
         // are sure that it fits.
         let percentage = (light_value as u32 * 100 / MAX_VALUE) as u8;
+
+        // Display the light's intensity and percentage
+        debug!("Light value {} / percentage {}%", light_value, percentage);
 
         // If the light intensity is low light up the LED with RED
         if percentage < 33 {

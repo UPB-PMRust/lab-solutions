@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::info;
+use defmt::{debug, info};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::{
@@ -23,7 +23,7 @@ async fn main(_spawner: Spawner) {
     info!("Device started");
 
     // The LED is connected on pin D3 (PB3)
-
+    //
     // PB3 can be connected for PWM to Channel 2 of TIM 2
     // The `PwmPin` sets the correct configuration of the MODER and
     // the Alternate Function of the pin PB3.
@@ -37,7 +37,7 @@ async fn main(_spawner: Spawner) {
         Some(led_pwm_pin),  // Channel 2 output (PB3)
         None,               // Channel 3 not used
         None,               // Channel 4 not used
-        khz(1),             // PWM frequency = 1 kHz
+        khz(10),            // PWM frequency = 10 kHz
         Default::default(), // Default configuration
     );
 
@@ -65,6 +65,9 @@ async fn main(_spawner: Spawner) {
     // with the LED off means generating a signal with
     // 100% duty cycle (always HIGH).
     for intensity in 0..=10 {
+        // Display the LED's intensity
+        debug!("LED intensity {}%", intensity * 10);
+
         // Set the duty cycle in percentage
         // - for intensity 0 => 0% (always on)
         // - for intensity 1 => 10% (10% on)

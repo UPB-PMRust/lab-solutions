@@ -4,8 +4,10 @@ words = [
     "defmt",
     "eabihf",
     "exti",
+    "ish",
     "linker's",
     "mcu",
+    "mille",
     "moder",
     "nmagic",
     "pwm",
@@ -16,4 +18,5 @@ words = [
     "thumbv",
     "tlink",
     "uptime",
+    "vcc",
 ]

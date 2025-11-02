@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::info;
+use defmt::{debug, info};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::{
@@ -17,9 +17,9 @@ use embassy_stm32::{
 use embassy_time::Timer;
 use panic_probe as _;
 
-/// Computes the duty cycle percentage (to the 1000) for
+/// Computes the duty cycle per_mille (to the 1000) for
 /// a given angle.
-fn servo_duty_cycle_percentage_for_angle(angle: u8) -> u16 {
+fn servo_duty_cycle_per_mille_for_angle(angle: u8) -> u16 {
     const MIN_PULSE_US: u32 = 500; // 0 degrees is 0.5 ms
     const MAX_PULSE_US: u32 = 2500; // 0 degrees is 2.5 ms
     const PERIOD_US: u32 = 20000; // 50 Hz period
@@ -34,10 +34,16 @@ fn servo_duty_cycle_percentage_for_angle(angle: u8) -> u16 {
     // 100% duty cycle ...... 20000 us (20 ms, PWM 50 Hz)
     // n duty cycle ......... pulse us
     //
-    // Due to accuracy, we compute the percentage in "to the 1000"
+    // Due to accuracy, we compute the per mille (to the 1000)
     // We compute using `u32` due to accuracy and transform the
     // value to `u16`.
-    ((pulse * 1000) / PERIOD_US) as u16
+    let period_per_mille = ((pulse * 1000) / PERIOD_US) as u16;
+
+    // Display the pulse length and the pulse per mille (to the 1000)
+    debug!("Pulse length {} / {}‰", pulse, period_per_mille);
+
+    // Return the `period_per_mille`
+    period_per_mille
 }
 
 #[embassy_executor::main]
@@ -80,22 +86,32 @@ async fn main(_spawner: Spawner) {
     loop {
         // Take every angle from 0 to 180
         for angle in 0..=180 {
-            // Set the duty cycle fraction duty_cycle_period / 1000
-            servo.set_duty_cycle_fraction(servo_duty_cycle_percentage_for_angle(angle), 1000);
+            // Display the angle
+            debug!("Angle {}", angle);
+
+            // Calculate the duty cycle per mille
+            let servo_per_mille = servo_duty_cycle_per_mille_for_angle(angle);
+
+            // Set the duty cycle fraction per mille
+            servo.set_duty_cycle_fraction(servo_per_mille, 1000);
 
             // We have to allow the servo to move.
             // This may be adjusted accordingly.
-            Timer::after_millis(1).await;
+            Timer::after_millis(10).await;
         }
 
         // Take every angle from 1 to 179 in reverse order
         for angle in (1..=179).rev() {
-            // Set the duty cycle fraction duty_cycle_period / 1000
-            servo.set_duty_cycle_fraction(servo_duty_cycle_percentage_for_angle(angle), 1000);
+            // Display the angle
+            debug!("Angle {}", angle);
+            let servo_per_mille = servo_duty_cycle_per_mille_for_angle(angle);
+
+            // Set the duty cycle fraction duty_cycle_period per mille
+            servo.set_duty_cycle_fraction(servo_per_mille, 1000);
 
             // We have to allow the servo to move.
             // This may be adjusted accordingly.
-            Timer::after_millis(1).await;
+            Timer::after_millis(10).await;
         }
     }
 }
