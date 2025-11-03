@@ -20,7 +20,7 @@ use panic_probe as _;
 
 /// Stores the current LED color
 ///
-/// #[derive(Format)] is required to be abel to
+/// #[derive(Format)] is required to be able to
 /// print this using the `defmt` formatter ({})
 #[derive(Format)]
 enum LedColor {
