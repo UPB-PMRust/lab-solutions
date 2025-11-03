@@ -1,6 +1,9 @@
 [[language]]
 name = "rust"
 
+[language-server.rust-analyzer.config.cargo]
+allTargets = false
+
 [language-server.rust-analyzer.config.check]
 targets = ["thumbv8m.main-none-eabihf"]
 allTargets = false
