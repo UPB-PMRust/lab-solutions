@@ -34,7 +34,7 @@ enum Command {
     DecreaseIntensity,
 }
 
-#[task]
+#[task(pool_size = 2)]
 async fn adjust_intensity(
     button_pin: ExtiInput<'static>,
     sender: DynamicSender<'static, Command>,
