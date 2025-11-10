@@ -25,10 +25,10 @@ async fn blink_yellow(
     button1: &mut Debouncer<ExtiInput<'_>>,
     button2: &mut Debouncer<ExtiInput<'_>>,
 ) -> Action {
-    for _ in 0..3 {
+    for _ in 0..2 {
         set_yellow(red, yellow, green);
         if let Either::Second(_) = select(
-            Timer::after_millis(125),
+            Timer::after_millis(500),
             join(
                 button1.wait_for_falling_edge(),
                 button2.wait_for_falling_edge(),
@@ -40,7 +40,7 @@ async fn blink_yellow(
         }
         turn_off(red, yellow, green);
         if let Either::Second(_) = select(
-            Timer::after_millis(125),
+            Timer::after_millis(500),
             join(
                 button1.wait_for_falling_edge(),
                 button2.wait_for_falling_edge(),
@@ -95,7 +95,7 @@ async fn main(_spawner: Spawner) {
                 // to the LEDs.
                 set_red(&mut red, &mut yellow, &mut green);
                 match select(
-                    Timer::after_secs(2),
+                    Timer::after_secs(5),
                     join(
                         button_s1.wait_for_falling_edge(),
                         button_s3.wait_for_falling_edge(),
@@ -123,7 +123,15 @@ async fn main(_spawner: Spawner) {
                 // The `set_green` function takes mutable borrows (references)
                 // to the LEDs.
                 set_green(&mut red, &mut yellow, &mut green);
-                match select(Timer::after_secs(5), button_s1.wait_for_falling_edge()).await {
+                match select(
+                    Timer::after_secs(10),
+                    join(
+                        button_s1.wait_for_falling_edge(),
+                        button_s3.wait_for_falling_edge(),
+                    ),
+                )
+                .await
+                {
                     Either::First(_) => Action::Timeout,
                     Either::Second(_) => Action::ButtonPressed,
                 }
