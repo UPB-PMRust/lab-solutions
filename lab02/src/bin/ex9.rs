@@ -110,13 +110,8 @@ async fn main(_spawner: Spawner) {
         // make it uppercase
         let letter = letter.to_ascii_uppercase();
         // verify if the character is in between A and Z
-        // (a..b) means the interval [a to b) - excluding b
-        // (a..=b) means the interval [a to b] - including b
-        //
-        // The `contains` function takes a reference to a value as
-        // it does not need to store it anywhere, it just wants
-        // to read it.
-        if ('A'..='Z').contains(&letter) {
+        // that is any ASCII uppercase letter
+        if letter.is_ascii_uppercase() {
             // We have to compute the position of the morse code in the
             // MORSE array. Position 0 is A, position 1 is B and so on.
             //

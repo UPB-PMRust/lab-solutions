@@ -1,5 +1,5 @@
 [package]
-name = "lab03"
+name = "lab04"
 version = "0.1.0"
 edition = "2024"
 
@@ -34,3 +34,5 @@ cortex-m-rt.workspace = true
 
 # Panic handler that exits `probe-run` with an error code
 panic-probe.workspace = true
+async-debounce = "0.3.0"
+embedded-hal-async = "1.0.0"
