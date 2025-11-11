@@ -3,6 +3,7 @@ words = [
     "chrono",
     "debouncer",
     "defmt",
+    "dyn",
     "eabihf",
     "exti",
     "ish",

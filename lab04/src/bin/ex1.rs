@@ -61,9 +61,9 @@ async fn main(spawner: Spawner) {
     // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
     // so that the LED are turned off when the pins are setup.
     //
-    // The red LED is connected to D8 (PC7)
+    // The red LED is connected to D8 (PC7).
     let led_red = Output::new(peripherals.PC7, Level::High, Speed::Low);
-    // The blue LED is connected to D9 (PC6)
+    // The blue LED is connected to D9 (PC6).
     let led_blue = Output::new(peripherals.PC6, Level::High, Speed::Low);
 
     // Start a `led_blink` task that runs in parallel with the `main` (this) task.

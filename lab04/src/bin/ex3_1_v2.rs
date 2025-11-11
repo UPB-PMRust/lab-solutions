@@ -103,7 +103,7 @@ async fn main(spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
     info!("Device started");
 
-    // The LED is connected on pin D3 (PB3)
+    // The LED is connected on pin D3 (PB3).
     //
     // PB3 can be connected for PWM to Channel 2 of TIM 2
     // The `PwmPin` sets the correct configuration of the MODER and
@@ -121,11 +121,15 @@ async fn main(spawner: Spawner) {
     // Buttons have to be debounced to prevent the tasks from reading several
     // button presses due to electrical noise generated when the button is pressed.
     // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
-    // functions with `ExitInput`.
+    // functions with `ExtiInput`.
+    //
+    // The S1 button is connected on pin D7 (PA8).
     let button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
         DEBOUNCE_STABLE_PERIOD,
     );
+
+    // The S2 button is connected on pin D8 (PC7).
     let button_s2 = Debouncer::new(
         ExtiInput::new(peripherals.PC7, peripherals.EXTI7, Pull::None),
         DEBOUNCE_STABLE_PERIOD,

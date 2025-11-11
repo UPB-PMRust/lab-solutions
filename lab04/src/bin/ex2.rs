@@ -8,7 +8,7 @@ use embassy_stm32::gpio::{Level, Output, Speed};
 use embassy_time::Timer;
 use panic_probe as _;
 
-/// Task the blinks the LED
+/// Task that blinks the LED
 ///
 /// The `task` macro transforms the function into an embassy
 /// task that can be spawned by a `Spawner`.
@@ -38,13 +38,13 @@ async fn main(spawner: Spawner) {
     // and turn off when the pin is HIGH. We set the initial value of the pin to HIGH
     // so that the LED are turned off when the pins are setup.
     //
-    // // The red LED is connected to D8 (PC7)
+    // // The red LED is connected to D8 (PC7).
     let led_red = Output::new(peripherals.PC7, Level::High, Speed::Low);
-    // The blue LED is connected to D9 (PC6)
+    // The blue LED is connected to D9 (PC6).
     let led_blue = Output::new(peripherals.PC6, Level::High, Speed::Low);
-    // The yellow LED is connected to D10 (PC9)
+    // The yellow LED is connected to D10 (PC9).
     let led_yellow = Output::new(peripherals.PC9, Level::High, Speed::Low);
-    // The green LED is connected to D11 (PA7)
+    // The green LED is connected to D11 (PA7).
     let led_green = Output::new(peripherals.PA7, Level::High, Speed::Low);
 
     // Start a `led_blink` tasks that run in parallel with the `main` (this) task.

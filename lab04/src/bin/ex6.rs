@@ -108,7 +108,6 @@ async fn barrier(
         // `next_message_pure` to get the next message.
         let traffic_light_state = subscriber.next_message_pure().await;
 
-        // next_message
         match traffic_light_state {
             TrafficLightState::Yellow | TrafficLightState::Red => {
                 info!("Barrier is closed");
@@ -146,6 +145,20 @@ async fn sound(
 ) {
     let mut beep = false;
     loop {
+        // Execute a task while waiting for another task:
+        // - wait for a message to arrive
+        // - repeat the traffic light sound pattern until
+        //   a message arrives
+        //
+        // `select` receives two Futures as parameters and waits
+        // for one of them to finish. When a Future finishes, the
+        // other Future is dropped and `select` returns.
+        //
+        // NOTE: The `next_message_pure` function and the
+        //       async block that controls the sound are called
+        //       without an `.await` as `select` requires the
+        //       Futures, not the Futures' result.
+        //       The `.await` is used for the `select` function.
         let traffic_light_state = select(
             // Wait for the traffic light state update.
             //
@@ -228,6 +241,8 @@ async fn main(spawner: Spawner) {
     // button presses due to electrical noise generated when the button is pressed.
     // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
     // functions with `ExtiInput`.
+    //
+    // The S1 button is connected on pin D7 (PA8).
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
         Duration::from_millis(100),
@@ -280,22 +295,84 @@ async fn main(spawner: Spawner) {
         Default::default(), // Default configuration
     );
 
+    // The initial traffic light state
     let mut traffic_light_state = TrafficLightState::Red;
 
+    // Get the publishing end of the channel. This will be used by the
+    // main task to publish the traffic light status.
+    //
+    // NOTE: The actual `Publisher` type is used here, as there is no function that
+    //       receives it and the type does not have to be named, the compiler
+    //       figures it out.
     let publisher = TRAFFIC_LIGHT_STATUS.publisher().unwrap();
+
+    // Get the a subscribing end of the channel for the `barrier` and `sound` tasks. These
+    // tasks will receive each one a subscribing end that that they will use to receive
+    // traffic light state updates.
+    //
+    // NOTE: The actual `Subscriber` type has a lot of parameters as it is a generic type.
+    //       While using the `Subscriber` type is generally faster as the compiler can
+    //       optimize the code, sending it to a function implies writing a long
+    //       type name in the function's parameter. Using `DynSubscriber` hides
+    //       the long type name at a small speed penalty.
     let subscriber_barrier = TRAFFIC_LIGHT_STATUS.dyn_subscriber().unwrap();
     let subscriber_sound = TRAFFIC_LIGHT_STATUS.dyn_subscriber().unwrap();
 
+    // Start the `barrier` task that runs in parallel with the `main` (this) task.
+    // The task receives three parameters that represent the PWM device and a
+    // subscriber end of the traffic light state channel.
+    //
+    // The task will start executing only when the main task
+    // finishes or uses an `.await`.
+    //
+    // NOTE: The `barrier` function is called without an `.await` as the
+    //       spawner requires the task's Future, not the Future's result.
     spawner
         .spawn(barrier(servo_pwm, subscriber_barrier))
         .unwrap();
+
+    // Start the `sound` task that runs in parallel with the `main` (this) task.
+    // The task receives three parameters that represent the PWM device and a
+    // subscriber end of the traffic light state channel.
+    //
+    // The task will start executing only when the main task
+    // finishes or uses an `.await`.
+    //
+    // NOTE: The `sound` function is called without an `.await` as the
+    //       spawner requires the task's Future, not the Future's result.
     spawner.spawn(sound(buzzer_pwm, subscriber_sound)).unwrap();
 
     loop {
+        // `async` blocks are used to group several asynchronous actions together
+        // that will be executed at some point later in the firmware.
+        //
+        // The `traffic_light_control` variable stores the Future returned
+        // by the `async` block. Instructions in the `async` block are not
+        // executed until the `traffic_light_control` is awaited.
+        //
+        // To memorize the Future returned by a block, use
+        // `let future = async { ... };`
+        //
+        // To execute a block immediately and memorize the value it returns, use
+        // `let value = async {...}.await`;
         let traffic_light_control = async {
             info!("Traffic Light {}", traffic_light_state);
-            publisher.publish_immediate(traffic_light_state);
+
+            // Publish the traffic light sate
+            //
+            // This function will do its best to publish the traffic light state
+            // to the channel. If the channel is at capacity, it will just drop
+            // the message.
+            //
+            // if not dropping messages is important, the task can use the
+            // `publish` function. When the channel is at capacity, this
+            // function suspends the task until it can publish the message.
+            //
+            // ```
             // publisher.publish(traffic_light_state).await;
+            // ```
+            publisher.publish_immediate(traffic_light_state);
+
             match traffic_light_state {
                 TrafficLightState::Red => {
                     // The `set_red` function takes mutable borrows (references)
@@ -317,17 +394,39 @@ async fn main(spawner: Spawner) {
             }
         };
 
+        // Wait for one of the actions to happen:
+        // - the traffic light control has reached the end of a state
+        //   and wants a new state
+        // - the button was pressed
+        //
+        // `select` receives two Futures as parameters and waits
+        // for one of them to finish. When a Future finishes, the
+        // other Future is dropped and `select` returns.
+        //
+        // NOTE: The `traffic_light_control` block and the
+        //       `wait_for_falling_edge` function are called
+        //       without an `.await` as `select` requires the
+        //       Futures, not the Futures' result.
+        //       The `.await` is used for the `select` function.
         let action = select(traffic_light_control, button_s1.wait_for_falling_edge()).await;
 
-        // Wait for the timer to expire or the button to be pressed
-
         match action {
+            // If the first Future returns, it means that the `traffic_light_control` has
+            // finished.
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
             Either::First(_) => {
                 info!("Timeout");
                 traffic_light_state = traffic_light_state.next();
             }
+
+            // If the second Future returns, it means that the button was pressed
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
             Either::Second(_) => {
-                info!("Buttons pressed");
+                info!("Button pressed");
                 match traffic_light_state {
                     TrafficLightState::Yellow | TrafficLightState::Green => {
                         traffic_light_state = traffic_light_state.next();
