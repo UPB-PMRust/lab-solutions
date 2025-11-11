@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Debounces GPIO inputs
 async-debounce = "0.3.0"
 # Low level access to Cortex-M processors
 cortex-m.workspace = true

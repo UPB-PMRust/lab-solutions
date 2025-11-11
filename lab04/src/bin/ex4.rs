@@ -15,6 +15,33 @@ use embedded_hal_async::digital::Wait;
 use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
 use panic_probe as _;
 
+/// The period in which a button's value has to stay stable
+/// to be considered pressed or released.
+///
+/// Due to their mechanical construction, when pressed or released,
+/// buttons generate voltage fluctuations that the GPIO pin might
+/// register as several pressed and releases. To avoid this,
+/// we have to debounce the signal. The general idea is:
+/// - in a loop
+///     - wait for the rising or falling edge
+///     - wait for an amount of time
+///     - if the value is still correct (HIGH or LOW) return
+///     - if the value changed, it means it was a transitory
+///       signal, go back and wait for another edge
+/// ```
+/// async fn debounce_wait_for_falling_edge (pin: ExtiInput<'static>, stable_for: Duration) {
+///     loop {
+///         pin.wait_for_falling_edge().await;
+///         Timer::after(duration).await;
+///         if pin.is_low() {
+///             break;
+///         }
+///     }
+/// }
+/// ```
+///
+const DEBOUNCE_STABLE_PERIOD: Duration = Duration::from_millis(100);
+
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
@@ -27,9 +54,14 @@ async fn main(_spawner: Spawner) {
     //    - the pin's value is LOW when the button is pressed
     // We can either use `Pull::None` or `Pull::Up` (not recommended),
     // we cannot use `Pull::Down`.
+    //
+    // Buttons have to be debounced to prevent the tasks from reading several
+    // button presses due to electrical noise generated when the button is pressed.
+    // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
+    // functions with `ExitInput`.
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
-        Duration::from_millis(100),
+        DEBOUNCE_STABLE_PERIOD,
     );
 
     // The LEDs on the lab board are active LOW: they light up when the pin is LOW

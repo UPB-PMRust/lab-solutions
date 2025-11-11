@@ -1,6 +1,7 @@
 words = [
     "boostrap",
     "chrono",
+    "debouncer",
     "defmt",
     "eabihf",
     "exti",

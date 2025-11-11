@@ -23,6 +23,33 @@ use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
 use panic_probe as _;
 
+/// The period in which a button's value has to stay stable
+/// to be considered pressed or released.
+///
+/// Due to their mechanical construction, when pressed or released,
+/// buttons generate voltage fluctuations that the GPIO pin might
+/// register as several pressed and releases. To avoid this,
+/// we have to debounce the signal. The general idea is:
+/// - in a loop
+///     - wait for the rising or falling edge
+///     - wait for an amount of time
+///     - if the value is still correct (HIGH or LOW) return
+///     - if the value changed, it means it was a transitory
+///       signal, go back and wait for another edge
+/// ```
+/// async fn debounce_wait_for_falling_edge (pin: ExtiInput<'static>, stable_for: Duration) {
+///     loop {
+///         pin.wait_for_falling_edge().await;
+///         Timer::after(duration).await;
+///         if pin.is_low() {
+///             break;
+///         }
+///     }
+/// }
+/// ```
+///
+const DEBOUNCE_STABLE_PERIOD: Duration = Duration::from_millis(100);
+
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let peripherals = embassy_stm32::init(Default::default());
@@ -42,13 +69,18 @@ async fn main(_spawner: Spawner) {
     //    - the pin's value is LOW when the button is pressed
     // We can either use `Pull::None` or `Pull::Up` (not recommended),
     // we cannot use `Pull::Down`.
+    //
+    // Buttons have to be debounced to prevent the tasks from reading several
+    // button presses due to electrical noise generated when the button is pressed.
+    // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
+    // functions with `ExitInput`.
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
-        Duration::from_millis(100),
+        DEBOUNCE_STABLE_PERIOD,
     );
     let mut button_s2 = Debouncer::new(
         ExtiInput::new(peripherals.PC7, peripherals.EXTI7, Pull::None),
-        Duration::from_millis(100),
+        DEBOUNCE_STABLE_PERIOD,
     );
 
     // Enable PWM for TIM2
@@ -78,20 +110,51 @@ async fn main(_spawner: Spawner) {
     // the LED turns on during the PWM's duty cycle period.
     led.set_polarity(OutputPolarity::ActiveLow);
 
+    // The initial LED's intensity percent
     let mut led_intensity = 0u8;
 
     loop {
-        // Set the duty cycle of the channel
+        // Set the intensity by modifying the duty cycle
         led.set_duty_cycle_percent(led_intensity);
-        Timer::after_millis(100).await;
+
+        // Wait for one of the two buttons to be pressed.
+        //
+        // `select` receives two Futures as parameters and waits
+        // for one of them to finish. When a Future finishes, the
+        // other Future is dropped and `select` returns.
+        //
+        // NOTE: The `wait_for_falling_edge` functions are called
+        //       without an `.await` as `select` requires the
+        //       Futures, not the Futures' result.
+        //       The `.await` is used for the `select` function.
         let button = select(
             button_s1.wait_for_falling_edge(),
             button_s2.wait_for_falling_edge(),
         )
         .await;
+
         match button {
-            Either::First(_) => led_intensity = min(100, led_intensity + 10),
-            Either::Second(_) => led_intensity = led_intensity.saturating_sub(10),
+            // If the first Future returns, it means that the button was pressed
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
+            Either::First(_) => {
+                // The intensity cannot go higher than 100, we use the
+                // minimum between 100 and the computed intensity.
+                led_intensity = min(100, led_intensity + 10)
+            }
+
+            // If the second Future returns, it means that the second button was pressed
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
+            Either::Second(_) => {
+                // The intensity cannot be lower then 0, so using `saturating_sub` will
+                // perform the subtraction but will not go bellow the data type's minimum
+                // value. The `led_intensity`'s data type is `u8`, with a minimum value
+                // of 0.
+                led_intensity = led_intensity.saturating_sub(10)
+            }
         }
     }
 }

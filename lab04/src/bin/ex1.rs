@@ -69,14 +69,20 @@ async fn main(spawner: Spawner) {
     // Start a `led_blink` task that runs in parallel with the `main` (this) task.
     // The task receives as parameter that represents the red LED.
     //
+    // The task will start executing only when the main task
+    // finishes or uses an `.await`.
+    //
     // NOTE: The `led_blink` function is called without an `.await` as the
-    // spanner requires the task's Future, not the Future's result.
+    //       spawner requires the task's Future, not the Future's result.
     spawner.spawn(led_blink(led_red)).unwrap();
 
     // Start a `led_blink` task that runs in parallel with the `main` (this) task.
     // The task receives as parameter that represents the blue LED.
     //
+    // The task will start executing only when the main task or the first `led_blink`
+    // task finish or use an `.await`.
+    //
     // NOTE: The `led_blink` function is called without an `.await` as the
-    // spanner requires the task's Future, not the Future's result.
+    //       spawner requires the task's Future, not the Future's result.
     spawner.spawn(led_blink(led_blue)).unwrap();
 }
