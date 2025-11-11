@@ -67,7 +67,7 @@ async fn main(spawner: Spawner) {
     let led_blue = Output::new(peripherals.PC6, Level::High, Speed::Low);
 
     // Start a `led_blink` task that runs in parallel with the `main` (this) task.
-    // The task receives as parameter that represents the red LED.
+    // The task receives a parameter that represents the red LED.
     //
     // The task will start executing only when the main task
     // finishes or uses an `.await`.
