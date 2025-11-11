@@ -30,6 +30,9 @@ use panic_probe as _;
 /// The channel used to send the LED's intensity from the button
 /// tasks to the main task.
 ///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
+///
 /// The channel is sending `u8` values and has a capacity of 50.
 /// When the capacity is full, sending tasks will either fail to send
 /// a message or will be suspended (`.await`) until the channel has space.

@@ -71,6 +71,9 @@ fn servo_duty_cycle_per_mille_for_angle(angle: u8) -> u16 {
 
 /// Task that handles the servo barrier
 ///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
+///
 /// The task receives the traffic light state notification and
 /// moves the barrier.
 #[task]
@@ -92,6 +95,17 @@ async fn barrier(
     servo.set_polarity(OutputPolarity::ActiveHigh);
 
     loop {
+        // Wait for the traffic light state update.
+        //
+        // The `next_message_pure` function returns the published latest message
+        // that the channel still has. The subscriber might have missed some
+        // messages.
+        //
+        // Using `next_message` will return either the latest message or
+        // the number of missed messages.
+        //
+        // As this task does not care if it misses some messages, it uses
+        // `next_message_pure` to get the next message.
         let traffic_light_state = subscriber.next_message_pure().await;
 
         // next_message
@@ -120,6 +134,9 @@ async fn barrier(
 
 /// Task that handles the buzzer
 ///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
+///
 /// The task receives the traffic light state notification and
 /// controls the buzzer.
 #[task]
@@ -129,25 +146,55 @@ async fn sound(
 ) {
     let mut beep = false;
     loop {
-        let traffic_light_state = select(subscriber.next_message_pure(), async {
-            // Get a mutable reference to channel 2 of TIM 2 to control it
-            let mut buzzer = buzzer_pwm.ch2();
+        let traffic_light_state = select(
+            // Wait for the traffic light state update.
+            //
+            // The `next_message_pure` function returns the published latest message
+            // that the channel still has. The subscriber might have missed some
+            // messages.
+            //
+            // Using `next_message` will return either the latest message or
+            // the number of missed messages.
+            //
+            // As this task does not care if it misses some messages, it uses
+            // `next_message_pure` to get the next message.
+            subscriber.next_message_pure(),
+            // Control the PWM to generate the buzzer sound
+            async {
+                // Get a mutable reference to channel 2 of TIM 2 to control it
+                let mut buzzer = buzzer_pwm.ch2();
 
-            buzzer.enable();
-            buzzer.set_duty_cycle_percent(50);
-            loop {
-                if beep {
-                    Timer::after_millis(500).await;
-                    buzzer.disable();
-                    Timer::after_millis(500).await;
-                    buzzer.enable();
-                } else {
-                    Timer::after_secs(1).await;
+                // Start generating the buzzer sound
+                buzzer.enable();
+
+                // Set a duty cycle of 50%.
+                //
+                // The duty cycle is not very relevant as this generates sound.
+                buzzer.set_duty_cycle_percent(50);
+                loop {
+                    if beep {
+                        Timer::after_millis(500).await;
+                        // Stop the sound
+                        buzzer.disable();
+                        Timer::after_millis(500).await;
+                        // Start the sound
+                        buzzer.enable();
+                    } else {
+                        // This should be "wait forever", but as `embassy-rs` does
+                        // not provide such a function, wait 1 second
+                        // make use of the loop to wait again.
+                        Timer::after_secs(1).await;
+                    }
                 }
-            }
-        })
+            },
+        )
         .await;
 
+        // Use pattern matching to extract the traffic light state.
+        //
+        // This should have used a `match` statement, but the second Future of the `select`
+        // function never returns (it is an infinite `loop`) and the compiler figures out
+        // that `Either::Second` cannot be returned.
         let Either::First(traffic_light_state) = traffic_light_state;
 
         // next_message
@@ -176,6 +223,11 @@ async fn main(spawner: Spawner) {
     //    - the pin's value is LOW when the button is pressed
     // We can either use `Pull::None` or `Pull::Up` (not recommended),
     // we cannot use `Pull::Down`.
+    //
+    // Buttons have to be debounced to prevent the tasks from reading several
+    // button presses due to electrical noise generated when the button is pressed.
+    // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
+    // functions with `ExitInput`.
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
         Duration::from_millis(100),

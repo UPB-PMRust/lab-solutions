@@ -11,7 +11,7 @@ use panic_probe as _;
 /// Task the blinks the LED
 ///
 /// The `task` macro transforms the function into an embassy
-/// task that can be spawned by a `Spawnner`.
+/// task that can be spawned by a `Spawner`.
 ///
 /// The `pool_size` argument asks Embassy to allocate enough
 /// memory for two identical tasks that run in parallel.

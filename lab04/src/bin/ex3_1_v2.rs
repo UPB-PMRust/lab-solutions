@@ -74,6 +74,9 @@ const DEBOUNCE_STABLE_PERIOD: Duration = Duration::from_millis(100);
 
 /// Task the sends a command to adjust the LED's intensity
 ///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
+///
 /// The `pool_size` is two as two tasks are spawned, one of increasing
 /// and one for decreasing the LED's intensity.
 ///

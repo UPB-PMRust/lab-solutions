@@ -71,6 +71,9 @@ const DEBOUNCE_STABLE_PERIOD: Duration = Duration::from_millis(100);
 /// Task that waits for a button press and send a command
 /// to increase the LED's intensity.
 ///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
+///
 /// The task receives the button that it waits for and the sending part
 /// of the commands channel.
 #[task]
@@ -89,6 +92,9 @@ async fn increase_intensity(
 
 /// Task that waits for a button press and send a command
 /// to decrease the LED's intensity.
+///
+/// The `task` macro transforms the function into an embassy
+/// task that can be spawned by a `Spawner`.
 ///
 /// The task receives the button that it waits for and the sending part
 /// of the commands channel.
