@@ -39,7 +39,7 @@ async fn led_blink(mut led_pin: Output<'static>) {
     //
     // The loop should use an asynchronous `wait` function like
     // `Timer::after_millis(500).await. This would interrupt
-    // the `loop` from while ti waits and allow other
+    // the `loop` from while it waits and allow other
     // tasks to run.
     loop {
         led_pin.set_low();
