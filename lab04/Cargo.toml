@@ -1,9 +1,11 @@
 [package]
-name = "lab03"
+name = "lab04"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Debounces GPIO inputs
+async-debounce = "0.3.0"
 # Low level access to Cortex-M processors
 cortex-m.workspace = true
 # Boostrap crate for Cortex-M Processors
@@ -23,5 +25,6 @@ embassy-stm32.workspace = true
 embassy-sync.workspace = true
 # Timekeeping, delays and timeouts
 embassy-time.workspace = true
+embedded-hal-async = "1.0.0"
 # Panic handler that exits `probe-run` with an error code
 panic-probe.workspace = true

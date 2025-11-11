@@ -4,9 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
-cortex-m-rt = "0.7.5"
+# Low level access to Cortex-M processors
+cortex-m.workspace = true
+# Boostrap crate for Cortex-M Processors
+cortex-m-rt.workspace = true
 cortex-m-semihosting = "0.5.0"
-defmt = "1.0.1"
-defmt-rtt = "1.1.0"
-panic-probe = { version = "1.0.0", features = ["print-defmt"] }
+# Defmt support
+defmt.workspace = true
+defmt-rtt.workspace = true
+# Panic handler that exits `probe-run` with an error code
+panic-probe.workspace = true

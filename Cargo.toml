@@ -1,3 +1,52 @@
 [workspace]
 resolver = "3"
-members = ["lab01", "lab02", "lab03"]
+members = ["lab01", "lab02", "lab03", "lab04"]
+
+[workspace.dependencies]
+# Low level access to Cortex-M processors
+cortex-m = { version = "0.7.7", features = [
+  "critical-section-single-core",
+  "inline-asm",
+] }
+# Boostrap crate for Cortex-M Processors
+cortex-m-rt = "0.7.5"
+# Defmt support
+defmt = "1.0.1"
+defmt-rtt = "1.1.0"
+# Embedded HAL utilities
+embassy-embedded-hal = { version = "0.5.0", features = [
+  "defmt",
+] }
+# Async/await executor
+embassy-executor = { version = "0.9.0", features = [
+  "arch-cortex-m",
+  "defmt",
+  "executor-thread",
+] }
+# Utilities for working with futures, compatible with no_std and not using alloc
+embassy-futures = { git = "https://github.com/embassy-rs/embassy", rev = "3e8d8fe", version = "0.1.2" }
+embassy-stm32 = { version = "0.4.0", features = [
+  "defmt",
+  "exti",
+  "memory-x",
+  "stm32u545re",
+  "time-driver-tim4",
+  "unstable-pac",
+  # "chrono",
+] }
+# Synchronization primitives and data structures with async support
+embassy-sync = { version = "0.7.2", features = [
+  "defmt",
+] }
+# Timekeeping, delays and timeouts
+embassy-time = { version = "0.5.0", features = [
+  "defmt",
+  "defmt-timestamp-uptime",
+  "tick-hz-32_768",
+] }
+# USB device
+embassy-usb = { version = "0.5.1", features = [
+  "defmt",
+] }
+# Panic handler that exits `probe-run` with an error code
+panic-probe = { version = "1.0.0", features = ["print-defmt"] }
