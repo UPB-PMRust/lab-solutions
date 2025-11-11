@@ -358,7 +358,7 @@ async fn main(spawner: Spawner) {
         let traffic_light_control = async {
             info!("Traffic Light {}", traffic_light_state);
 
-            // Publish the traffic light sate
+            // Publish the traffic light state
             //
             // This function will do its best to publish the traffic light state
             // to the channel. If the channel is at capacity, it will just drop
