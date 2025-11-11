@@ -55,22 +55,20 @@ async fn main(_spawner: Spawner) {
 
     loop {
         let traffic_light_control = async {
+            info!("Traffic Light {}", traffic_light_state);
             match traffic_light_state {
                 TrafficLightState::Red => {
-                    info!("Traffic Light RED");
                     // The `set_red` function takes mutable borrows (references)
                     // to the LEDs.
                     set_red(&mut red, &mut yellow, &mut green);
                     Timer::after_secs(5).await;
                 }
                 TrafficLightState::Yellow => {
-                    info!("Traffic Light YELLOW");
                     // The `set_yellow` function takes mutable borrows (references)
                     // to the LEDs.
                     blink_yellow(&mut red, &mut yellow, &mut green).await
                 }
                 TrafficLightState::Green => {
-                    info!("Traffic Light GREEN");
                     // The `set_green` function takes mutable borrows (references)
                     // to the LEDs.
                     set_green(&mut red, &mut yellow, &mut green);

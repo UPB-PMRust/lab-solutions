@@ -27,7 +27,7 @@ use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
 use panic_probe as _;
 
-static COMMANDS_CHANNEL: Channel<ThreadModeRawMutex, u8, 50> = Channel::new();
+static INTENSITY_CHANNEL: Channel<ThreadModeRawMutex, u8, 50> = Channel::new();
 
 #[task]
 async fn adjust_intensity(
@@ -102,8 +102,8 @@ async fn main(spawner: Spawner) {
     // the LED turns on during the PWM's duty cycle period.
     led.set_polarity(OutputPolarity::ActiveLow);
 
-    let sender = COMMANDS_CHANNEL.dyn_sender();
-    let receiver = COMMANDS_CHANNEL.receiver();
+    let sender = INTENSITY_CHANNEL.dyn_sender();
+    let receiver = INTENSITY_CHANNEL.receiver();
 
     spawner
         .spawn(adjust_intensity(sender, button_s1, button_s2))

@@ -1,6 +1,8 @@
+use defmt::Format;
 use embassy_stm32::gpio::Output;
 use embassy_time::Timer;
 
+#[derive(Copy, Clone, Format)]
 pub enum TrafficLightState {
     Red,
     Yellow,

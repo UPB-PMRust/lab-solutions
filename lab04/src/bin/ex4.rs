@@ -47,6 +47,7 @@ async fn main(_spawner: Spawner) {
 
     loop {
         let traffic_light_control = async {
+            info!("Traffic Light {}", traffic_light_state);
             match traffic_light_state {
                 TrafficLightState::Red => {
                     // The `set_red` function takes mutable borrows (references)
