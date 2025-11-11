@@ -12,8 +12,12 @@ use embassy_stm32::{
 };
 use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
-use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
 use panic_probe as _;
+
+// There are several exercises that use the same date types and functions for
+// the Traffic Light, so these are grouped in a library. Take a look
+// at `src/lib.rs`.
+use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
 
 /// The period in which a button's value has to stay stable
 /// to be considered pressed or released.
@@ -75,9 +79,22 @@ async fn main(_spawner: Spawner) {
     // The green LED is connected to D10 (PC9).
     let mut green = Output::new(peripherals.PC9, Level::High, Speed::Low);
 
+    // The initial traffic light state
     let mut traffic_light_state = TrafficLightState::Red;
 
     loop {
+        // `async` blocks are used to group several asynchronous actions together
+        // that will be executed at some point later in the firmware.
+        //
+        // The `traffic_light_control` variable stores the Future returned
+        // by the `async` block. Instructions in the `async` block are not
+        // executed until the `traffic_light_control` is awaited.
+        //
+        // To memorize the Future returned by a block, use
+        // `let future = async { ... };`
+        //
+        // To execute a block immediately and memorize the value it returns, use
+        // `let value = async {...}.await`;
         let traffic_light_control = async {
             info!("Traffic Light {}", traffic_light_state);
             match traffic_light_state {
@@ -101,18 +118,46 @@ async fn main(_spawner: Spawner) {
             }
         };
 
+        // Wait for one of the actions to happen:
+        // - the traffic light control has reached the end of a state
+        //   and wants a new state
+        // - the button was pressed
+        //
+        // `select` receives two Futures as parameters and waits
+        // for one of them to finish. When a Future finishes, the
+        // other Future is dropped and `select` returns.
+        //
+        // NOTE: The `traffic_light_control` block and the
+        //       `wait_for_falling_edge` function are called
+        //       without an `.await` as `select` requires the
+        //       Futures, not the Futures' result.
+        //       The `.await` is used for the `select` function.
         let action = select(traffic_light_control, button_s1.wait_for_falling_edge()).await;
 
-        // Wait for the timer to expire or the button to be pressed
-
         match action {
-            Either::First(_) => traffic_light_state = traffic_light_state.next(),
-            Either::Second(_) => match traffic_light_state {
-                TrafficLightState::Yellow | TrafficLightState::Green => {
-                    traffic_light_state = traffic_light_state.next();
+            // If the first Future returns, it means that the `traffic_light_control` has
+            // finished.
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
+            Either::First(_) => {
+                info!("Timeout");
+                traffic_light_state = traffic_light_state.next()
+            }
+
+            // If the second Future returns, it means that the button was pressed
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
+            Either::Second(_) => {
+                info!("Button pressed");
+                match traffic_light_state {
+                    TrafficLightState::Yellow | TrafficLightState::Green => {
+                        traffic_light_state = traffic_light_state.next();
+                    }
+                    TrafficLightState::Red => {}
                 }
-                TrafficLightState::Red => {}
-            },
+            }
         }
     }
 }

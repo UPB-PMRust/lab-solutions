@@ -1,7 +1,16 @@
+//! Traffic Light Functions
+
 use defmt::Format;
 use embassy_stm32::gpio::Output;
 use embassy_time::Timer;
 
+/// Traffic Light State
+///
+/// The compiler is asked to implement the `Copy` and `Clone` traits
+/// so that the value can be copied around.
+///
+/// The compiler is asked to implement the `Format` trait so
+/// the value can be printed using `defmt`.
 #[derive(Copy, Clone, Format)]
 pub enum TrafficLightState {
     Red,
@@ -10,6 +19,7 @@ pub enum TrafficLightState {
 }
 
 impl TrafficLightState {
+    /// Go to the next Traffic Light state
     pub fn next(&self) -> TrafficLightState {
         match self {
             TrafficLightState::Red => TrafficLightState::Yellow,
@@ -55,6 +65,10 @@ pub fn set_green(red: &mut Output, yellow: &mut Output, green: &mut Output) {
     green.set_low();
 }
 
+/// Blinks the yellow LED three times once a second
+///
+/// The function uses mutable references to the LEDs, as `set_high` and
+/// `set_low` required mutable borrows (references).
 pub async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: &mut Output<'_>) {
     for _ in 0..3 {
         set_yellow(red, yellow, green);
@@ -64,6 +78,10 @@ pub async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: 
     }
 }
 
+/// Turns off all the LEDs
+///
+/// The function uses mutable references to the LEDs, as `set_high` and
+/// `set_low` required mutable borrows (references).
 pub fn turn_off(red: &mut Output, yellow: &mut Output, green: &mut Output) {
     // The LEDs on the lab board are active LOW: they light up when the
     // pin is LOW and turn off when the pin is HIGH.

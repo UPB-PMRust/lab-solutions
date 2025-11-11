@@ -19,7 +19,7 @@ use embassy_stm32::{
         simple_pwm::{PwmPin, SimplePwm},
     },
 };
-use embassy_time::{Duration, Timer};
+use embassy_time::Duration;
 use embedded_hal_async::digital::Wait;
 use panic_probe as _;
 

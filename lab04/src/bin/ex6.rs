@@ -23,9 +23,20 @@ use embassy_sync::{
 };
 use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
-use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
 use panic_probe as _;
 
+// There are several exercises that use the same date types and functions for
+// the Traffic Light, so these are grouped in a library. Take a look
+// at `src/lib.rs`.
+use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
+
+/// The channel used to publish the traffic light state from the main task.
+///
+/// The channel is publishing `TrafficLightState` values, has a capacity of 50,
+/// allows 2 subscribers and 1 publisher.
+///
+/// When the capacity is full, publishers tasks will either fail to publish
+/// a message or will be suspended (`.await`) until the channel has space.
 static TRAFFIC_LIGHT_STATUS: PubSubChannel<ThreadModeRawMutex, TrafficLightState, 50, 2, 1> =
     PubSubChannel::new();
 
@@ -58,6 +69,10 @@ fn servo_duty_cycle_per_mille_for_angle(angle: u8) -> u16 {
     period_per_mille
 }
 
+/// Task that handles the servo barrier
+///
+/// The task receives the traffic light state notification and
+/// moves the barrier.
 #[task]
 async fn barrier(
     mut servo_pwm: SimplePwm<'static, TIM3>,
@@ -103,6 +118,10 @@ async fn barrier(
     }
 }
 
+/// Task that handles the buzzer
+///
+/// The task receives the traffic light state notification and
+/// controls the buzzer.
 #[task]
 async fn sound(
     mut buzzer_pwm: SimplePwm<'static, TIM2>,

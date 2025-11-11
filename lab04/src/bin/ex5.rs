@@ -17,7 +17,37 @@ use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
 use panic_probe as _;
 
+// There are several exercises that use the same date types and functions for
+// the Traffic Light, so these are grouped in a library. Take a look
+// at `src/lib.rs`.
 use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
+
+/// The period in which a button's value has to stay stable
+/// to be considered pressed or released.
+///
+/// Due to their mechanical construction, when pressed or released,
+/// buttons generate voltage fluctuations that the GPIO pin might
+/// register as several pressed and releases. To avoid this,
+/// we have to debounce the signal. The general idea is:
+/// - in a loop
+///     - wait for the rising or falling edge
+///     - wait for an amount of time
+///     - if the value is still correct (HIGH or LOW) return
+///     - if the value changed, it means it was a transitory
+///       signal, go back and wait for another edge
+/// ```
+/// async fn debounce_wait_for_falling_edge (pin: ExtiInput<'static>, stable_for: Duration) {
+///     loop {
+///         pin.wait_for_falling_edge().await;
+///         Timer::after(duration).await;
+///         if pin.is_low() {
+///             break;
+///         }
+///     }
+/// }
+/// ```
+///
+const DEBOUNCE_STABLE_PERIOD: Duration = Duration::from_millis(100);
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -31,13 +61,18 @@ async fn main(_spawner: Spawner) {
     //    - the pin's value is LOW when the button is pressed
     // We can either use `Pull::None` or `Pull::Up` (not recommended),
     // we cannot use `Pull::Down`.
+    //
+    // Buttons have to be debounced to prevent the tasks from reading several
+    // button presses due to electrical noise generated when the button is pressed.
+    // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
+    // functions with `ExitInput`.
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
-        Duration::from_millis(100),
+        DEBOUNCE_STABLE_PERIOD,
     );
     let mut button_s3 = Debouncer::new(
         ExtiInput::new(peripherals.PB10, peripherals.EXTI10, Pull::None),
-        Duration::from_millis(100),
+        DEBOUNCE_STABLE_PERIOD,
     );
 
     // The LEDs on the lab board are active LOW: they light up when the pin is LOW
@@ -51,9 +86,22 @@ async fn main(_spawner: Spawner) {
     // The green LED is connected to D10 (PC9).
     let mut green = Output::new(peripherals.PC9, Level::High, Speed::Low);
 
+    // The initial traffic light state
     let mut traffic_light_state = TrafficLightState::Red;
 
     loop {
+        // `async` blocks are used to group several asynchronous actions together
+        // that will be executed at some point later in the firmware.
+        //
+        // The `traffic_light_control` variable stores the Future returned
+        // by the `async` block. Instructions in the `async` block are not
+        // executed until the `traffic_light_control` is awaited.
+        //
+        // To memorize the Future returned by a block, use
+        // `let future = async { ... };`
+        //
+        // To execute a block immediately and memorize the value it returns, use
+        // `let value = async {...}.await`;
         let traffic_light_control = async {
             info!("Traffic Light {}", traffic_light_state);
             match traffic_light_state {
@@ -77,8 +125,26 @@ async fn main(_spawner: Spawner) {
             }
         };
 
+        // Wait for one of the actions to happen:
+        // - the traffic light control has reached the end of a state
+        //   and wants a new state
+        // - both buttons were pressed, not necessary at
+        //   the same time
+        //
+        // `select` receives two Futures as parameters and waits
+        // for one of them to finish. When a Future finishes, the
+        // other Future is dropped and `select` returns.
+        //
+        // NOTE: The `traffic_light_control` block and the
+        //       `join` function are called
+        //       without an `.await` as `select` requires the
+        //       Futures, not the Futures' result.
+        //       The `.await` is used for the `select` function.
         let action = select(
             traffic_light_control,
+            // `join` receives two Futures as parameters and waits
+            // for both of them to finish. When both Futures finish,
+            // `join` returns a tuple with the Future's return values.
             join(
                 button_s1.wait_for_falling_edge(),
                 button_s3.wait_for_falling_edge(),
@@ -86,13 +152,21 @@ async fn main(_spawner: Spawner) {
         )
         .await;
 
-        // Wait for the timer to expire or the button to be pressed
-
         match action {
+            // If the first Future returns, it means that the `traffic_light_control` has
+            // finished.
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
             Either::First(_) => {
                 info!("Timeout");
                 traffic_light_state = traffic_light_state.next();
             }
+
+            // If the second Future returns, it means that both buttons were pressed
+            //
+            // The actual return value of the Future is not important so
+            // a `_` is used to ask the compiler to discard the value.
             Either::Second(_) => {
                 info!("Buttons pressed");
                 match traffic_light_state {
