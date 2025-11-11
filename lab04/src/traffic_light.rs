@@ -1,3 +1,5 @@
+use embassy_stm32::gpio::Output;
+
 pub enum TrafficLightState {
     Red,
     Yellow,
@@ -13,13 +15,6 @@ impl TrafficLightState {
         }
     }
 }
-
-pub enum Action {
-    Timeout,
-    ButtonPressed,
-}
-
-use embassy_stm32::gpio::Output;
 
 /// Lights up the red LED and turns off the yellow and green LED
 ///

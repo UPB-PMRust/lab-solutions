@@ -12,30 +12,16 @@ use embassy_stm32::{
 };
 use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
-use lab04::traffic_light::{Action, TrafficLightState, set_green, set_red, set_yellow, turn_off};
+use lab04::traffic_light::{TrafficLightState, set_green, set_red, set_yellow, turn_off};
 use panic_probe as _;
 
-async fn blink_yellow(
-    red: &mut Output<'_>,
-    yellow: &mut Output<'_>,
-    green: &mut Output<'_>,
-    button: &mut Debouncer<ExtiInput<'_>>,
-) -> Action {
+async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: &mut Output<'_>) {
     for _ in 0..3 {
         set_yellow(red, yellow, green);
-        if let Either::Second(_) =
-            select(Timer::after_millis(125), button.wait_for_falling_edge()).await
-        {
-            return Action::ButtonPressed;
-        }
+        Timer::after_millis(500).await;
         turn_off(red, yellow, green);
-        if let Either::Second(_) =
-            select(Timer::after_millis(125), button.wait_for_falling_edge()).await
-        {
-            return Action::ButtonPressed;
-        }
+        Timer::after_millis(500).await;
     }
-    Action::Timeout
 }
 
 #[embassy_executor::main]
@@ -69,42 +55,40 @@ async fn main(_spawner: Spawner) {
     let mut traffic_light_state = TrafficLightState::Red;
 
     loop {
-        let action = match traffic_light_state {
-            TrafficLightState::Red => {
-                // The `set_red` function takes mutable borrows (references)
-                // to the LEDs.
-                set_red(&mut red, &mut yellow, &mut green);
-                match select(Timer::after_secs(2), button_s1.wait_for_falling_edge()).await {
-                    Either::First(_) => Action::Timeout,
-                    Either::Second(_) => Action::ButtonPressed,
+        let traffic_light_control = async {
+            match traffic_light_state {
+                TrafficLightState::Red => {
+                    // The `set_red` function takes mutable borrows (references)
+                    // to the LEDs.
+                    set_red(&mut red, &mut yellow, &mut green);
+                    Timer::after_secs(5).await;
                 }
-            }
-            TrafficLightState::Yellow => {
-                // The `set_yellow` function takes mutable borrows (references)
-                // to the LEDs.
-                blink_yellow(&mut red, &mut yellow, &mut green, &mut button_s1).await
-            }
-            TrafficLightState::Green => {
-                // The `set_green` function takes mutable borrows (references)
-                // to the LEDs.
-                set_green(&mut red, &mut yellow, &mut green);
-                match select(Timer::after_secs(5), button_s1.wait_for_falling_edge()).await {
-                    Either::First(_) => Action::Timeout,
-                    Either::Second(_) => Action::ButtonPressed,
+                TrafficLightState::Yellow => {
+                    // The `set_yellow` function takes mutable borrows (references)
+                    // to the LEDs.
+                    blink_yellow(&mut red, &mut yellow, &mut green).await;
+                }
+                TrafficLightState::Green => {
+                    // The `set_green` function takes mutable borrows (references)
+                    // to the LEDs.
+                    set_green(&mut red, &mut yellow, &mut green);
+                    Timer::after_secs(10).await;
                 }
             }
         };
 
+        let action = select(traffic_light_control, button_s1.wait_for_falling_edge()).await;
+
         // Wait for the timer to expire or the button to be pressed
 
         match action {
-            Action::ButtonPressed => match traffic_light_state {
+            Either::First(_) => traffic_light_state = traffic_light_state.next(),
+            Either::Second(_) => match traffic_light_state {
                 TrafficLightState::Yellow | TrafficLightState::Green => {
                     traffic_light_state = traffic_light_state.next();
                 }
                 TrafficLightState::Red => {}
             },
-            Action::Timeout => traffic_light_state = traffic_light_state.next(),
         }
     }
 }

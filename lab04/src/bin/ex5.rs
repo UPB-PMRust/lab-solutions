@@ -15,43 +15,17 @@ use embassy_stm32::{
 };
 use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
-use lab04::traffic_light::{Action, TrafficLightState, set_green, set_red, set_yellow, turn_off};
 use panic_probe as _;
 
-async fn blink_yellow(
-    red: &mut Output<'_>,
-    yellow: &mut Output<'_>,
-    green: &mut Output<'_>,
-    button1: &mut Debouncer<ExtiInput<'_>>,
-    button2: &mut Debouncer<ExtiInput<'_>>,
-) -> Action {
-    for _ in 0..2 {
+use lab04::traffic_light::{TrafficLightState, set_green, set_red, set_yellow, turn_off};
+
+async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: &mut Output<'_>) {
+    for _ in 0..3 {
         set_yellow(red, yellow, green);
-        if let Either::Second(_) = select(
-            Timer::after_millis(500),
-            join(
-                button1.wait_for_falling_edge(),
-                button2.wait_for_falling_edge(),
-            ),
-        )
-        .await
-        {
-            return Action::ButtonPressed;
-        }
+        Timer::after_millis(500).await;
         turn_off(red, yellow, green);
-        if let Either::Second(_) = select(
-            Timer::after_millis(500),
-            join(
-                button1.wait_for_falling_edge(),
-                button2.wait_for_falling_edge(),
-            ),
-        )
-        .await
-        {
-            return Action::ButtonPressed;
-        }
+        Timer::after_millis(500).await
     }
-    Action::Timeout
 }
 
 #[embassy_executor::main]
@@ -71,7 +45,7 @@ async fn main(_spawner: Spawner) {
         Duration::from_millis(100),
     );
     let mut button_s3 = Debouncer::new(
-        ExtiInput::new(peripherals.PA7, peripherals.EXTI7, Pull::None),
+        ExtiInput::new(peripherals.PB10, peripherals.EXTI10, Pull::None),
         Duration::from_millis(100),
     );
 
@@ -89,65 +63,56 @@ async fn main(_spawner: Spawner) {
     let mut traffic_light_state = TrafficLightState::Red;
 
     loop {
-        let action = match traffic_light_state {
-            TrafficLightState::Red => {
-                // The `set_red` function takes mutable borrows (references)
-                // to the LEDs.
-                set_red(&mut red, &mut yellow, &mut green);
-                match select(
-                    Timer::after_secs(5),
-                    join(
-                        button_s1.wait_for_falling_edge(),
-                        button_s3.wait_for_falling_edge(),
-                    ),
-                )
-                .await
-                {
-                    Either::First(_) => Action::Timeout,
-                    Either::Second(_) => Action::ButtonPressed,
+        let traffic_light_control = async {
+            match traffic_light_state {
+                TrafficLightState::Red => {
+                    info!("Traffic Light RED");
+                    // The `set_red` function takes mutable borrows (references)
+                    // to the LEDs.
+                    set_red(&mut red, &mut yellow, &mut green);
+                    Timer::after_secs(5).await;
                 }
-            }
-            TrafficLightState::Yellow => {
-                // The `set_yellow` function takes mutable borrows (references)
-                // to the LEDs.
-                blink_yellow(
-                    &mut red,
-                    &mut yellow,
-                    &mut green,
-                    &mut button_s1,
-                    &mut button_s3,
-                )
-                .await
-            }
-            TrafficLightState::Green => {
-                // The `set_green` function takes mutable borrows (references)
-                // to the LEDs.
-                set_green(&mut red, &mut yellow, &mut green);
-                match select(
-                    Timer::after_secs(10),
-                    join(
-                        button_s1.wait_for_falling_edge(),
-                        button_s3.wait_for_falling_edge(),
-                    ),
-                )
-                .await
-                {
-                    Either::First(_) => Action::Timeout,
-                    Either::Second(_) => Action::ButtonPressed,
+                TrafficLightState::Yellow => {
+                    info!("Traffic Light YELLOW");
+                    // The `set_yellow` function takes mutable borrows (references)
+                    // to the LEDs.
+                    blink_yellow(&mut red, &mut yellow, &mut green).await
+                }
+                TrafficLightState::Green => {
+                    info!("Traffic Light GREEN");
+                    // The `set_green` function takes mutable borrows (references)
+                    // to the LEDs.
+                    set_green(&mut red, &mut yellow, &mut green);
+                    Timer::after_secs(10).await;
                 }
             }
         };
 
+        let action = select(
+            traffic_light_control,
+            join(
+                button_s1.wait_for_falling_edge(),
+                button_s3.wait_for_falling_edge(),
+            ),
+        )
+        .await;
+
         // Wait for the timer to expire or the button to be pressed
 
         match action {
-            Action::ButtonPressed => match traffic_light_state {
-                TrafficLightState::Yellow | TrafficLightState::Green => {
-                    traffic_light_state = traffic_light_state.next();
+            Either::First(_) => {
+                info!("Timeout");
+                traffic_light_state = traffic_light_state.next();
+            }
+            Either::Second(_) => {
+                info!("Buttons pressed");
+                match traffic_light_state {
+                    TrafficLightState::Yellow | TrafficLightState::Green => {
+                        traffic_light_state = traffic_light_state.next();
+                    }
+                    TrafficLightState::Red => {}
                 }
-                TrafficLightState::Red => {}
-            },
-            Action::Timeout => traffic_light_state = traffic_light_state.next(),
+            }
         }
     }
 }
