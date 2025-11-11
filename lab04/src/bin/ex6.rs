@@ -227,7 +227,7 @@ async fn main(spawner: Spawner) {
     // Buttons have to be debounced to prevent the tasks from reading several
     // button presses due to electrical noise generated when the button is pressed.
     // `Debouncer` takes a GPIO Input and debounces the signal. It exposes similar
-    // functions with `ExitInput`.
+    // functions with `ExtiInput`.
     let mut button_s1 = Debouncer::new(
         ExtiInput::new(peripherals.PA8, peripherals.EXTI8, Pull::None),
         Duration::from_millis(100),
