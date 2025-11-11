@@ -15,7 +15,7 @@ use panic_probe as _;
 /// else can run while this function executes.
 ///
 /// NOTE: Using this within embassy will block all the tasks
-/// until this function function returns.
+/// until this function returns.
 fn busy_wait(ms: u64) {
     let start_time = Instant::now();
     while start_time.elapsed().as_millis() < ms {}
