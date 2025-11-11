@@ -12,17 +12,8 @@ use embassy_stm32::{
 };
 use embassy_time::{Duration, Timer};
 use embedded_hal_async::digital::Wait;
-use lab04::traffic_light::{TrafficLightState, set_green, set_red, set_yellow, turn_off};
+use lab04::traffic_light::{TrafficLightState, blink_yellow, set_green, set_red};
 use panic_probe as _;
-
-async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: &mut Output<'_>) {
-    for _ in 0..3 {
-        set_yellow(red, yellow, green);
-        Timer::after_millis(500).await;
-        turn_off(red, yellow, green);
-        Timer::after_millis(500).await;
-    }
-}
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {

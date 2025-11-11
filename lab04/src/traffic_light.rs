@@ -1,4 +1,5 @@
 use embassy_stm32::gpio::Output;
+use embassy_time::Timer;
 
 pub enum TrafficLightState {
     Red,
@@ -50,6 +51,15 @@ pub fn set_green(red: &mut Output, yellow: &mut Output, green: &mut Output) {
     red.set_high();
     yellow.set_high();
     green.set_low();
+}
+
+pub async fn blink_yellow(red: &mut Output<'_>, yellow: &mut Output<'_>, green: &mut Output<'_>) {
+    for _ in 0..3 {
+        set_yellow(red, yellow, green);
+        Timer::after_millis(500).await;
+        turn_off(red, yellow, green);
+        Timer::after_millis(500).await;
+    }
 }
 
 pub fn turn_off(red: &mut Output, yellow: &mut Output, green: &mut Output) {
