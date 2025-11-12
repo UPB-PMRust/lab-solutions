@@ -47,7 +47,7 @@ async fn main(spawner: Spawner) {
     // The green LED is connected to D11 (PA7).
     let led_green = Output::new(peripherals.PA7, Level::High, Speed::Low);
 
-    // Start a `led_blink` tasks that run in parallel with the `main` (this) task.
+    // Start the `led_blink` tasks that run in parallel with the `main` (this) task.
     // The tasks receive two parameters that represents the LED and
     // the blink frequency.
     //
