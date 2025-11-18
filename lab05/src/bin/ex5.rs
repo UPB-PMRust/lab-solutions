@@ -1,0 +1,123 @@
+#![no_std]
+#![no_main]
+
+use core::{cell::RefCell, fmt::Write};
+
+use defmt::{debug, info, warn};
+use defmt_rtt as _;
+use embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig;
+use embassy_executor::Spawner;
+use embassy_stm32::{
+    gpio::{Level, Output, Speed},
+    spi::{self, Spi},
+    time::Hertz,
+};
+use embassy_sync::blocking_mutex::{Mutex, raw::NoopRawMutex};
+use embassy_time::{Delay, Timer};
+use embedded_graphics::{
+    Drawable,
+    draw_target::DrawTarget,
+    mono_font::{MonoTextStyle, ascii::FONT_6X10},
+    pixelcolor::Rgb565,
+    prelude::{Point, RgbColor},
+    text::Text,
+};
+use lab05::mpu6500::{AccelScale, GyroScale, device_blocking::Mpu6500};
+use mipidsi::{
+    interface::SpiInterface,
+    models::ST7735s,
+    options::{Orientation, Rotation},
+};
+use panic_probe as _;
+
+#[embassy_executor::main]
+async fn main(_spawner: Spawner) {
+    let peripherals = embassy_stm32::init(Default::default());
+    info!("Device started");
+
+    let screen_rst = Output::new(peripherals.PA1, Level::Low, Speed::Low);
+    let screen_dc = Output::new(peripherals.PA2, Level::Low, Speed::Low);
+    let screen_cs = Output::new(peripherals.PA3, Level::High, Speed::Low);
+
+    let spi = Spi::new_blocking(
+        peripherals.SPI1,
+        peripherals.PA5,
+        peripherals.PA7,
+        peripherals.PA6,
+        spi::Config::default(),
+    );
+    let spi_bus_mutex: Mutex<NoopRawMutex, _> = Mutex::new(RefCell::new(spi));
+
+    let mut screen_spi_config = spi::Config::default();
+    screen_spi_config.frequency = Hertz(3_000_000);
+
+    let display_spi = SpiDeviceWithConfig::new(&spi_bus_mutex, screen_cs, screen_spi_config);
+
+    let mut screen_buffer = [0; 4096];
+
+    let di = SpiInterface::new(display_spi, screen_dc, &mut screen_buffer);
+    let mut screen = mipidsi::Builder::new(ST7735s, di)
+        .reset_pin(screen_rst)
+        .orientation(Orientation::new().rotate(Rotation::Deg180))
+        .init(&mut Delay)
+        .unwrap();
+
+    let mut mpu6500_spi_config = spi::Config::default();
+    mpu6500_spi_config.frequency = Hertz(1_000_000);
+
+    let mpu6500_cs_pin = Output::new(peripherals.PA8, Level::High, Speed::Low);
+
+    let mut mpu6500_spi_device =
+        SpiDeviceWithConfig::new(&spi_bus_mutex, mpu6500_cs_pin, mpu6500_spi_config);
+
+    let mut mpu6500 = Mpu6500::new(&mut mpu6500_spi_device);
+
+    screen.clear(Rgb565::BLACK).unwrap();
+    let style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+
+    if mpu6500.is_connected() {
+        mpu6500
+            .set_accel_scale(AccelScale::G2)
+            .expect("Failed to set the acceleration scale");
+        mpu6500
+            .set_gyro_scale(GyroScale::Gs1000)
+            .expect("Failed to set the gyro scale");
+
+        loop {
+            let acceleration = mpu6500.read_acceleration().unwrap();
+
+            let mut buf = heapless::String::<20>::new();
+            core::write!(
+                &mut buf,
+                "Acceleration: X {}, Y {}, Z {}",
+                acceleration.x,
+                acceleration.y,
+                acceleration.z
+            )
+            .unwrap();
+
+            Text::new(&buf, Point::new(10, 20), style)
+                .draw(&mut screen)
+                .unwrap();
+
+            debug!(
+                "Acceleration: X {}, Y {}, Z {}",
+                acceleration.x, acceleration.y, acceleration.z
+            );
+
+            let gyro = mpu6500.read_gyro().unwrap();
+
+            let mut buf = heapless::String::<20>::new();
+            core::write!(&mut buf, "Gyro: X {}, Y {}, Z {}", gyro.x, gyro.y, gyro.z).unwrap();
+
+            Text::new(&buf, Point::new(10, 50), style)
+                .draw(&mut screen)
+                .unwrap();
+
+            info!("Gyro: X {}, Y {}, Z {}", gyro.x, gyro.y, gyro.z);
+            Timer::after_millis(100).await;
+        }
+    } else {
+        warn!("MPU6500 sensor is not connected.");
+    }
+}
