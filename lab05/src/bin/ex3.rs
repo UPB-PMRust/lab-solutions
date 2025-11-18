@@ -37,7 +37,7 @@ const WHO_AM_I_VALUE: u8 = 0x70;
 /// The acceleration scale value for ±2g
 const ACCEL_SCALE_2G: u8 = 0b00;
 
-/// The gyre scale value for ±1000 deg / s
+/// The gyro scale value for ±1000 deg / s
 const GYRO_SCALE_1000: u8 = 0b10;
 
 #[embassy_executor::main]
