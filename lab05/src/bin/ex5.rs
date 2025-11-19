@@ -8,7 +8,9 @@ use defmt_rtt as _;
 use embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig;
 use embassy_executor::Spawner;
 use embassy_stm32::{
+    Config,
     gpio::{Level, Output, Speed},
+    rcc::{Pll, PllDiv, PllMul, PllPreDiv, PllSource, Sysclk, VoltageScale, mux},
     spi::{self, Spi},
     time::Hertz,
 };
@@ -20,7 +22,7 @@ use embedded_graphics::{
     mono_font::{MonoTextStyle, ascii::FONT_6X10},
     pixelcolor::Rgb565,
     prelude::{Point, RgbColor},
-    text::Text,
+    text::{Text, renderer::CharacterStyle},
 };
 use lab05::mpu6500::{AccelScale, GyroScale, device_blocking::Mpu6500};
 use mipidsi::{
@@ -32,12 +34,29 @@ use panic_probe as _;
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    let peripherals = embassy_stm32::init(Default::default());
+    let mut config = Config::default();
+    config.rcc.hsi = true;
+    config.rcc.pll1 = Some(Pll {
+        source: PllSource::HSI, // 16 MHz
+        prediv: PllPreDiv::DIV1,
+        mul: PllMul::MUL10,
+        divp: None,
+        divq: None,
+        divr: Some(PllDiv::DIV1), // 160 MHz
+    });
+    config.rcc.sys = Sysclk::PLL1_R;
+    config.rcc.voltage_range = VoltageScale::RANGE1;
+    config.rcc.mux.iclksel = mux::Iclksel::HSI48; // USB uses ICLK
+
+    let peripherals = embassy_stm32::init(config);
     info!("Device started");
 
-    let screen_rst = Output::new(peripherals.PA1, Level::Low, Speed::Low);
-    let screen_dc = Output::new(peripherals.PA2, Level::Low, Speed::Low);
-    let screen_cs = Output::new(peripherals.PA3, Level::High, Speed::Low);
+    // screen reset is D2 (PC8)
+    let screen_rst = Output::new(peripherals.PC8, Level::Low, Speed::Low);
+    // screen dc is D3 (PB3)
+    let screen_dc = Output::new(peripherals.PB3, Level::Low, Speed::Low);
+    // screen cs is D4(PB5)
+    let screen_cs = Output::new(peripherals.PB5, Level::High, Speed::Low);
 
     let spi = Spi::new_blocking(
         peripherals.SPI1,
@@ -53,7 +72,7 @@ async fn main(_spawner: Spawner) {
 
     let display_spi = SpiDeviceWithConfig::new(&spi_bus_mutex, screen_cs, screen_spi_config);
 
-    let mut screen_buffer = [0; 4096];
+    let mut screen_buffer = [0; 10 * 4096];
 
     let di = SpiInterface::new(display_spi, screen_dc, &mut screen_buffer);
     let mut screen = mipidsi::Builder::new(ST7735s, di)
@@ -73,7 +92,9 @@ async fn main(_spawner: Spawner) {
     let mut mpu6500 = Mpu6500::new(&mut mpu6500_spi_device);
 
     screen.clear(Rgb565::BLACK).unwrap();
-    let style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+    let mut style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+    style.set_background_color(Some(Rgb565::BLACK));
+    // let style_black = MonoTextStyle::new(&FONT_6X10, Rgb565::BLACK);
 
     if mpu6500.is_connected() {
         mpu6500
@@ -85,18 +106,19 @@ async fn main(_spawner: Spawner) {
 
         loop {
             let acceleration = mpu6500.read_acceleration().unwrap();
+            let gyro = mpu6500.read_gyro().unwrap();
 
-            let mut buf = heapless::String::<20>::new();
+            let mut acceleration_buf = heapless::String::<100>::new();
             core::write!(
-                &mut buf,
-                "Acceleration: X {}, Y {}, Z {}",
+                &mut acceleration_buf,
+                "Acceleration:\n X {}     \n Y {}     \n Z {}     ",
                 acceleration.x,
                 acceleration.y,
                 acceleration.z
             )
             .unwrap();
 
-            Text::new(&buf, Point::new(10, 20), style)
+            Text::new(&acceleration_buf, Point::new(0, 20), style)
                 .draw(&mut screen)
                 .unwrap();
 
@@ -105,12 +127,17 @@ async fn main(_spawner: Spawner) {
                 acceleration.x, acceleration.y, acceleration.z
             );
 
-            let gyro = mpu6500.read_gyro().unwrap();
+            let mut gyro_buf = heapless::String::<100>::new();
+            core::write!(
+                &mut gyro_buf,
+                "Gyro:\n X {}     \n Y {}     \n Z {}     ",
+                gyro.x,
+                gyro.y,
+                gyro.z
+            )
+            .unwrap();
 
-            let mut buf = heapless::String::<20>::new();
-            core::write!(&mut buf, "Gyro: X {}, Y {}, Z {}", gyro.x, gyro.y, gyro.z).unwrap();
-
-            Text::new(&buf, Point::new(10, 50), style)
+            Text::new(&gyro_buf, Point::new(0, 120), style)
                 .draw(&mut screen)
                 .unwrap();
 

@@ -89,9 +89,9 @@ async fn read_acceleration(
     cs.set_high();
     match res {
         Ok(()) => Ok(Acceleration {
-            x: i16::from_le_bytes([rx[1], rx[2]]),
-            y: i16::from_le_bytes([rx[3], rx[4]]),
-            z: i16::from_le_bytes([rx[5], rx[6]]),
+            x: i16::from_be_bytes([rx[1], rx[2]]),
+            y: i16::from_be_bytes([rx[3], rx[4]]),
+            z: i16::from_be_bytes([rx[5], rx[6]]),
         }),
         Err(error) => Err(error),
     }
@@ -105,9 +105,9 @@ async fn read_gyro(spi: &mut Spi<'_, Async>, cs: &mut Output<'_>) -> Result<Gyro
     cs.set_high();
     match res {
         Ok(()) => Ok(Gyro {
-            x: i16::from_le_bytes([rx[1], rx[2]]),
-            y: i16::from_le_bytes([rx[3], rx[4]]),
-            z: i16::from_le_bytes([rx[5], rx[6]]),
+            x: i16::from_be_bytes([rx[1], rx[2]]),
+            y: i16::from_be_bytes([rx[3], rx[4]]),
+            z: i16::from_be_bytes([rx[5], rx[6]]),
         }),
         Err(error) => Err(error),
     }

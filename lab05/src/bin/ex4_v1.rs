@@ -70,9 +70,9 @@ async fn main(_spawner: Spawner) {
         mpu6500_cs_pin.set_high();
         info!(
             "Acceleration: X {}, Y {}, Z {}",
-            i16::from_le_bytes([rx[1], rx[2]]),
-            i16::from_le_bytes([rx[3], rx[4]]),
-            i16::from_le_bytes([rx[5], rx[6]])
+            i16::from_be_bytes([rx[1], rx[2]]),
+            i16::from_be_bytes([rx[3], rx[4]]),
+            i16::from_be_bytes([rx[5], rx[6]])
         );
 
         mpu6500_cs_pin.set_low();
@@ -82,9 +82,9 @@ async fn main(_spawner: Spawner) {
         mpu6500_cs_pin.set_high();
         info!(
             "Gyro: X {}, Y {}, Z {}",
-            i16::from_le_bytes([rx[1], rx[2]]),
-            i16::from_le_bytes([rx[3], rx[4]]),
-            i16::from_le_bytes([rx[5], rx[6]])
+            i16::from_be_bytes([rx[1], rx[2]]),
+            i16::from_be_bytes([rx[3], rx[4]]),
+            i16::from_be_bytes([rx[5], rx[6]])
         );
 
         Timer::after_millis(100).await;

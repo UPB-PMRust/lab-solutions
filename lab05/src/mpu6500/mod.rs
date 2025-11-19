@@ -12,7 +12,7 @@ const ACCEL_CONFIG: u8 = 0x1c;
 /// WHO_AM_I Register Value for the MPU6500 sensor
 const WHO_AM_I_VALUE: u8 = 0x70;
 
-/// The register address that the [`Mpu6500::read_value`]
+/// The register address that the [`bus::Mpu6500::read_value`]
 /// function should read
 ///
 /// This is represented as a `u8` so that it can be cast
