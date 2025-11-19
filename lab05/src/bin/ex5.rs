@@ -94,7 +94,6 @@ async fn main(_spawner: Spawner) {
     screen.clear(Rgb565::BLACK).unwrap();
     let mut style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
     style.set_background_color(Some(Rgb565::BLACK));
-    // let style_black = MonoTextStyle::new(&FONT_6X10, Rgb565::BLACK);
 
     if mpu6500.is_connected() {
         mpu6500
