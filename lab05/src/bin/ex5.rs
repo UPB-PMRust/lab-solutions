@@ -86,7 +86,7 @@ async fn main(_spawner: Spawner) {
     let mut screen_spi_config = spi::Config::default();
     screen_spi_config.frequency = Hertz(3_000_000);
 
-    // Create a SPI device for the mididsi display driver.
+    // Create a SPI device for the mipidsi display driver.
     //
     // The display requires a higher frequency than the MPU6500 sensor.
     let display_spi = SpiDeviceWithConfig::new(&spi_bus_mutex, screen_cs, screen_spi_config);
