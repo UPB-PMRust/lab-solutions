@@ -63,7 +63,7 @@ pub enum ValueRegister {
 ///
 /// Instead of using numbers we defined this as an enum to
 /// make sure that users cannot use any other values
-/// than the these.
+/// than these.
 ///
 /// This is represented as a `u8` so that it can be cast
 /// to a `u8` using the `as` keyword
