@@ -39,6 +39,26 @@ const GYRO_XOUT_H: u8 = 0x43;
 /// WHO_AM_I Register Value for the MPU6500 sensor
 const WHO_AM_I_VALUE: u8 = 0x70;
 
+/// Converts the `u16` acceleration value to m/s^2 using
+/// the configured acceleration scale.
+fn convert_to_g(value: i16, scale: AccelScale) -> f32 {
+    // i16::MAX ...... scale.value() (2, 4, 8 or 16 x g)
+    // value ......... acceleration
+    //
+    // acceleration = (value x scale.value()) / i16::MAX
+    (value as f32 * scale.value()) / i16::MAX as f32
+}
+
+/// Converts the `u16` acceleration value to deg/s using
+/// the configured gyro scale.
+fn convert_to_deg_s(value: i16, scale: GyroScale) -> f32 {
+    // i16::MAX ...... scale.value() (250, 500, 1000 or 2000 deg/s)
+    // value ......... gyro
+    //
+    // acceleration = (value x scale.value()) / i16::MAX
+    (value as f32 * scale.value()) / i16::MAX as f32
+}
+
 /// Set the gyro scale
 ///
 /// The function receives:
@@ -73,7 +93,7 @@ async fn set_gyro_scale(
     // As all the other fields of the GYRO_CONFIG register are 0,
     // all that we have to do is to shift the
     // GYRO_SCALE_1000 value 3 positions to the left.
-    let command = [(1 << 7) | GYRO_CONFIG, (scale as u8) << 3];
+    let command = [!(1 << 7) & GYRO_CONFIG, (scale as u8) << 3];
 
     // Even though we do not read any values form the sensor, we have to
     // supply an rx buffer with the same length as the command buffer.
@@ -100,6 +120,12 @@ async fn set_gyro_scale(
     res
 }
 
+/// Set the acceleration scale
+///
+/// The function receives:
+/// - a reference to the SPI bus
+/// - a reference to the CS pin
+/// - the acceleration scale value
 async fn set_accel_scale(
     spi: &mut Spi<'_, Async>,
     cs: &mut Output<'_>,
@@ -111,12 +137,11 @@ async fn set_accel_scale(
     //  - 1 - read the register's value from the sensor
     //  - 0 - write a value to the sensor's register
     //
-    // We shift 1 with 7 positions obtaining 0b1000_0000 and
+    // We should shift 1 with 7 positions obtaining 0b1000_0000 and
     // negate it to obtain 0b0111_1111. We need to make sure
     // that bit 7 is 0 as we are performing a write. We
     // AND this value with the ACCEL_CONFIG register address 0x0001_1011
     // and obtain 0x0001_1011.
-    //
     // This was actually not required as the ACCEL_CONFIG's
     // most significant bit was already 0.
     //
@@ -128,7 +153,7 @@ async fn set_accel_scale(
     // As all the other fields of the ACCEL_CONFIG register are 0,
     // all that we have to do is to shift the
     // ACCEL_SCALE_2G value 3 positions to the left.
-    let command = [(1 << 7) | ACCEL_CONFIG, (scale as u8) << 3];
+    let command = [ACCEL_CONFIG, (scale as u8) << 3];
 
     // Even though we do not read any values form the sensor, we have to
     // supply an rx buffer with the same length as the command buffer.
@@ -220,10 +245,13 @@ async fn read_acceleration(
     // Verify if the transmission was successful
     match res {
         // The transmission was successful, extract and return the acceleration
+        //
+        // We have to convert the `i16` value to m/s^2. We know that we have set the
+        // acceleration scale to AccelScale::G2.
         Ok(()) => Ok(Acceleration {
-            x: i16::from_be_bytes([rx[1], rx[2]]),
-            y: i16::from_be_bytes([rx[3], rx[4]]),
-            z: i16::from_be_bytes([rx[5], rx[6]]),
+            x: convert_to_g(i16::from_be_bytes([rx[1], rx[2]]), AccelScale::G2),
+            y: convert_to_g(i16::from_be_bytes([rx[3], rx[4]]), AccelScale::G2),
+            z: convert_to_g(i16::from_be_bytes([rx[5], rx[6]]), AccelScale::G2),
         }),
         // The transmission was not successful, return the error
         Err(error) => Err(error),
@@ -288,12 +316,15 @@ async fn read_gyro(spi: &mut Spi<'_, Async>, cs: &mut Output<'_>) -> Result<Gyro
     cs.set_high();
 
     // Verify if the transmission was successful
+    //
+    // We have to convert the `i16` value to deg/s. We know that we have set the
+    // gyro scale to GyroScale::Gs1000.
     match res {
         // The transmission was successful, extract and return the gyro
         Ok(()) => Ok(Gyro {
-            x: i16::from_be_bytes([rx[1], rx[2]]),
-            y: i16::from_be_bytes([rx[3], rx[4]]),
-            z: i16::from_be_bytes([rx[5], rx[6]]),
+            x: convert_to_deg_s(i16::from_be_bytes([rx[1], rx[2]]), GyroScale::Gs1000),
+            y: convert_to_deg_s(i16::from_be_bytes([rx[3], rx[4]]), GyroScale::Gs1000),
+            z: convert_to_deg_s(i16::from_be_bytes([rx[5], rx[6]]), GyroScale::Gs1000),
         }),
         // The transmission was not successful, return the error
         Err(error) => Err(error),

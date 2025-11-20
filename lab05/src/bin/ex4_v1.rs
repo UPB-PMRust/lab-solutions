@@ -10,6 +10,7 @@ use embassy_stm32::{
     time::Hertz,
 };
 use embassy_time::Timer;
+use lab05::mpu6500::{AccelScale, GyroScale};
 use panic_probe as _;
 
 /// WHO_AM_I Register Address
@@ -37,8 +38,28 @@ const WHO_AM_I_VALUE: u8 = 0x70;
 /// The acceleration scale value for ±2g
 const ACCEL_SCALE_2G: u8 = 0b00;
 
-/// The gyro scale value for ±1000 deg / s
+/// The gyro scale value for ±1000 deg/s
 const GYRO_SCALE_1000: u8 = 0b10;
+
+/// Converts the `u16` acceleration value to m/s^2 using
+/// the configured acceleration scale.
+fn convert_to_g(value: i16, scale: AccelScale) -> f32 {
+    // i16::MAX ...... scale.value() (2, 4, 8 or 16 x g)
+    // value ......... acceleration
+    //
+    // acceleration = (value x scale.value()) / i16::MAX
+    (value as f32 * scale.value()) / i16::MAX as f32
+}
+
+/// Converts the `u16` acceleration value to deg/s using
+/// the configured gyro scale.
+fn convert_to_deg_s(value: i16, scale: GyroScale) -> f32 {
+    // i16::MAX ...... scale.value() (250, 500, 1000 or 2000 deg/s)
+    // value ......... gyro
+    //
+    // acceleration = (value x scale.value()) / i16::MAX
+    (value as f32 * scale.value()) / i16::MAX as f32
+}
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -260,11 +281,13 @@ async fn main(_spawner: Spawner) {
         mpu6500_cs_pin.set_high();
 
         // Convert the raw values into `i16` m/s^2
+        //
+        // We know that we have set the acceleration scale to 2G
         info!(
             "Acceleration: X {}, Y {}, Z {}",
-            i16::from_be_bytes([rx[1], rx[2]]),
-            i16::from_be_bytes([rx[3], rx[4]]),
-            i16::from_be_bytes([rx[5], rx[6]])
+            convert_to_g(i16::from_be_bytes([rx[1], rx[2]]), AccelScale::G2),
+            convert_to_g(i16::from_be_bytes([rx[3], rx[4]]), AccelScale::G2),
+            convert_to_g(i16::from_be_bytes([rx[5], rx[6]]), AccelScale::G2)
         );
 
         // Read the gyro
@@ -321,11 +344,13 @@ async fn main(_spawner: Spawner) {
         mpu6500_cs_pin.set_high();
 
         // Convert the raw values into `i16` deg/s
+        //
+        // We know that we have set the gyro scale to 1000 deg/s
         info!(
             "Gyro: X {}, Y {}, Z {}",
-            i16::from_be_bytes([rx[1], rx[2]]),
-            i16::from_be_bytes([rx[3], rx[4]]),
-            i16::from_be_bytes([rx[5], rx[6]])
+            convert_to_deg_s(i16::from_be_bytes([rx[1], rx[2]]), GyroScale::Gs1000),
+            convert_to_deg_s(i16::from_be_bytes([rx[3], rx[4]]), GyroScale::Gs1000),
+            convert_to_deg_s(i16::from_be_bytes([rx[5], rx[6]]), GyroScale::Gs1000)
         );
 
         Timer::after_millis(100).await;
