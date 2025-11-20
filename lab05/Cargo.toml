@@ -1,0 +1,32 @@
+[package]
+name = "lab05"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Low level access to Cortex-M processors
+cortex-m.workspace = true
+# Boostrap crate for Cortex-M Processors
+cortex-m-rt.workspace = true
+# Defmt support
+defmt.workspace = true
+defmt-rtt.workspace = true
+# Embedded HAL utilities
+embassy-embedded-hal.workspace = true
+# Async/await executor
+embassy-executor.workspace = true
+# Utilities for working with futures, compatible with no_std and not using alloc
+embassy-futures.workspace = true
+# STM32 HAL Implementation
+embassy-stm32.workspace = true
+# Synchronization primitives and data structures with async support
+embassy-sync.workspace = true
+# Timekeeping, delays and timeouts
+embassy-time.workspace = true
+embedded-graphics = "0.8.1"
+embedded-hal = "1.0.0"
+embedded-hal-async = "1.0.0"
+heapless = "0.9.2"
+mipidsi = "0.9.0"
+# Panic handler that exits `probe-run` with an error code
+panic-probe.workspace = true
