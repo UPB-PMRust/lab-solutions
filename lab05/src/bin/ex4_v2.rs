@@ -43,7 +43,7 @@ const WHO_AM_I_VALUE: u8 = 0x70;
 ///
 /// The function receives:
 /// - a reference to the SPI bus
-/// - a reference tp the CS pin
+/// - a reference to the CS pin
 /// - the gyro scale value
 async fn set_gyro_scale(
     spi: &mut Spi<'_, Async>,
