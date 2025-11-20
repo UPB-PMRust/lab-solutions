@@ -127,6 +127,10 @@ async fn main(_spawner: Spawner) {
 
     screen.clear(Rgb565::BLACK).unwrap();
     let mut style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+
+    // We set the background color to print the characters with a background, so that we can
+    // fully overwrite the previous text. Unless we use a background color, the text will
+    // superpose the letters and digits on the old text.
     style.set_background_color(Some(Rgb565::BLACK));
 
     if mpu6500.is_connected() {
