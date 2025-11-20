@@ -32,7 +32,7 @@ async fn main(_spawner: Spawner) {
     // - MOSI - D11 (PA7)
     // - CLK - D13 (PA5)
     //
-    // We use the asynchronous API an we need two free
+    // We use the asynchronous API and we need two free
     // DMA channels. We use GPDMA1_CH0 and GPDMA1_CH1
     let spi = Spi::new(
         peripherals.SPI1,
@@ -47,7 +47,7 @@ async fn main(_spawner: Spawner) {
     // We use the D7 (PA8) pin as CS
     let mpu6500_cs_pin = Output::new(peripherals.PA8, Level::High, Speed::Low);
 
-    // Create a Mutex that so that we can safely share the SPI bus between devices.
+    // Create a Mutex so that we can safely share the SPI bus between devices.
     //
     // Due to the Mutex, only one device will have access to the bus at a time.
     let spi_mutex = Mutex::<ThreadModeRawMutex, _>::new(spi);

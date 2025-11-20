@@ -76,7 +76,7 @@ async fn main(_spawner: Spawner) {
     // - MOSI - D11 (PA7)
     // - CLK - D13 (PA5)
     //
-    // We use the asynchronous API an we need two free
+    // We use the asynchronous API and we need two free
     // DMA channels. We use GPDMA1_CH0 and GPDMA1_CH1
     let mut spi = Spi::new(
         peripherals.SPI1,
@@ -128,7 +128,7 @@ async fn main(_spawner: Spawner) {
     spi.transfer(&mut rx, &command).await.unwrap();
     // End the SPI transmission by setting the CS line HIGH.
     mpu6500_cs_pin.set_high();
-    // Panic if the WHO_AM_I register value if wrong
+    // Panic if the WHO_AM_I register value is wrong
     // This is a quick and dirty trick that is not recommended in production firmware,
     // but works for our example. If this happens in production, the firmware
     // should gracefully fail.

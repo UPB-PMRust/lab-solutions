@@ -2,7 +2,7 @@
 //!
 //! This driver requires the SPI bus, meaning that the
 //! SPI bus is not available for other drivers while this
-//! driver is available and has not ben dropped. The SPI
+//! driver is available and has not been dropped. The SPI
 //! bus is not available to other drivers even if this
 //! driver is not transferring anything.
 //!
@@ -116,7 +116,7 @@ impl<'a, S: SpiBus> Mpu6500<'a, S> {
             Ok(()) => {
                 // If the register's value is the one expected,
                 // we confirm that the MPU 6500 is connected to
-                // the SPI by returning `true` other wise we
+                // the SPI by returning `true` otherwise we
                 // return `false`.
                 rx[1] == WHO_AM_I_VALUE
             }

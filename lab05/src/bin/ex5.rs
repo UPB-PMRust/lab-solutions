@@ -68,7 +68,7 @@ async fn main(_spawner: Spawner) {
     // - MOSI - D11 (PA7)
     // - CLK - D13 (PA5)
     //
-    // We need a blocking SPI as the `mididsi` display drivers require a blocking SPI device.
+    // We need a blocking SPI as the `mipidsi` display drivers require a blocking SPI device.
     let spi = Spi::new_blocking(
         peripherals.SPI1,
         peripherals.PA5,
@@ -77,7 +77,7 @@ async fn main(_spawner: Spawner) {
         spi::Config::default(),
     );
 
-    // Create a Mutex that so that we can safely share the SPI bus between devices.
+    // Create a Mutex so that we can safely share the SPI bus between devices.
     //
     // Due to the Mutex, only one device will have access to the bus at a time.
     let spi_bus_mutex: Mutex<NoopRawMutex, _> = Mutex::new(RefCell::new(spi));
@@ -128,9 +128,9 @@ async fn main(_spawner: Spawner) {
     screen.clear(Rgb565::BLACK).unwrap();
     let mut style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
 
-    // We set the background color to print the characters with a background, so that we can
-    // fully overwrite the previous text. Unless we use a background color, the text will
-    // superpose the letters and digits on the old text.
+    // We set the background color to print characters with a background, so that we can
+    // fully overwrite the previous text. Otherwise, the new text will just be drawn
+    // on top of the old text, making it unreadable.
     style.set_background_color(Some(Rgb565::BLACK));
 
     if mpu6500.is_connected() {

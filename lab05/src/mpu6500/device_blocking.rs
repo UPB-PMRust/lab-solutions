@@ -108,7 +108,7 @@ impl<'a, S: SpiDevice> Mpu6500<'a, S> {
             Ok(()) => {
                 // If the register's value is the one expected,
                 // we confirm that the MPU 6500 is connected to
-                // the SPI by returning `true` other wise we
+                // the SPI by returning `true` otherwise we
                 // return `false`.
                 rx[1] == WHO_AM_I_VALUE
             }
