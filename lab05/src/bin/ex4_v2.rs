@@ -160,6 +160,7 @@ async fn set_accel_scale(
 /// The function receives:
 /// - a reference to the SPI bus
 /// - a reference to the CS pin
+///
 /// The function returns either the acceleration value or an error
 async fn read_acceleration(
     spi: &mut Spi<'_, Async>,
@@ -234,6 +235,7 @@ async fn read_acceleration(
 /// The function receives:
 /// - a reference to the SPI bus
 /// - a reference to the CS pin
+///
 /// The function returns either the acceleration value or an error
 async fn read_gyro(spi: &mut Spi<'_, Async>, cs: &mut Output<'_>) -> Result<Gyro, Error> {
     // This is the buffer that is sent to the sensor. The format is:
