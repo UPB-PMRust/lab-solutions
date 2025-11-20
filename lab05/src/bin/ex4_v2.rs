@@ -159,7 +159,7 @@ async fn set_accel_scale(
 ///
 /// The function receives:
 /// - a reference to the SPI bus
-/// - a reference tp the CS pin
+/// - a reference to the CS pin
 /// The function returns either the acceleration value or an error
 async fn read_acceleration(
     spi: &mut Spi<'_, Async>,
