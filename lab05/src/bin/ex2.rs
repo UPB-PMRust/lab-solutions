@@ -31,7 +31,7 @@ async fn main(_spawner: Spawner) {
     // - MOSI - D11 (PA7)
     // - CLK - D13 (PA5)
     //
-    // We use the asynchronous API an we need two free
+    // We use the asynchronous API and we need two free
     // DMA channels. We use GPDMA1_CH0 and GPDMA1_CH1
     let mut spi = Spi::new(
         peripherals.SPI1,
