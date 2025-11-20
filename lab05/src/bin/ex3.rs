@@ -72,7 +72,7 @@ async fn main(_spawner: Spawner) {
 
     // This is the buffer that is sent to the sensor. The format is:
     // | R/W REGISTER_ADDRESS | as many zeros as many data bytes we want to read |
-    // - R/W is the the first bit:
+    // - R/W is the the most significant bit (first bit):
     //  - 1 - read the register's value from the sensor
     //  - 0 - write a value to the sensor's register
     //
@@ -117,7 +117,7 @@ async fn main(_spawner: Spawner) {
 
     // This is the buffer that is sent to the sensor. The format is:
     // | R/W REGISTER_ADDRESS | as many zeros as many data bytes we want to read |
-    // - R/W is the the first bit:
+    // - R/W is the the most significant bit (first bit):
     //  - 1 - read the register's value from the sensor
     //  - 0 - write a value to the sensor's register
     //
@@ -139,12 +139,14 @@ async fn main(_spawner: Spawner) {
     // all that we have to do is to shift the
     // ACCEL_SCALE_2G value 3 positions to the left.
     let command = [!(1 << 7) & ACCEL_CONFIG, ACCEL_SCALE_2G << 3];
+
     // Even though we do not read any values form the sensor, we have to
     // supply an rx buffer with the same length as the command buffer.
     // The sensor will send us random data, but we use DMA and
     // DMA will want to transfer some data to us, regardless if it
     // is useful data or not.
     let mut rx = [0u8; 2];
+
     // Start the SPI transmission by setting the CS line LOW.
     mpu6500_cs_pin.set_low();
     // Transfer the data:
@@ -156,6 +158,7 @@ async fn main(_spawner: Spawner) {
     // but works for our example. If this happens in production, the firmware
     // should gracefully fail.
     spi.transfer(&mut rx, &command).await.unwrap();
+
     // End the SPI transmission by setting the CS line HIGH.
     mpu6500_cs_pin.set_high();
 
@@ -163,7 +166,7 @@ async fn main(_spawner: Spawner) {
 
     // This is the buffer that is sent to the sensor. The format is:
     // | R/W REGISTER_ADDRESS | bytes that we want to write |
-    // - R/W is the the first bit:
+    // - R/W is the the most significant bit (first bit):
     //  - 1 - read the register's value from the sensor
     //  - 0 - write a value to the sensor's register
     //
@@ -210,7 +213,7 @@ async fn main(_spawner: Spawner) {
 
         // This is the buffer that is sent to the sensor. The format is:
         // | R/W REGISTER_ADDRESS | as many zeros as many data bytes we want to read |
-        // - R/W is the the first bit:
+        // - R/W is the the most significant bit (first bit):
         //  - 1 - read the register's value from the sensor
         //  - 0 - write a value to the sensor's register
         //
@@ -243,6 +246,7 @@ async fn main(_spawner: Spawner) {
 
         // Start the SPI transmission by setting the CS line LOW.
         mpu6500_cs_pin.set_low();
+
         // Transfer the data:
         // - send the command buffer (command followed by six zero bytes)
         // - receive in the rx buffer (random byte followed by the values of
@@ -263,7 +267,7 @@ async fn main(_spawner: Spawner) {
 
         // This is the buffer that is sent to the sensor. The format is:
         // | R/W REGISTER_ADDRESS | as many zeros as many data bytes we want to read |
-        // - R/W is the the first bit:
+        // - R/W is the the most significant bit (first bit):
         //  - 1 - read the register's value from the sensor
         //  - 0 - write a value to the sensor's register
         //

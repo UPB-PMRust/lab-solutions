@@ -30,6 +30,10 @@ pub enum ValueRegister {
 /// The possible values for the `GYRO_FS_SEL` field of
 /// the `GYRO_CONFIG` register.
 ///
+/// Instead of using numbers we defined this as an enum to
+/// make sure that users cannot use any other values
+/// than the these.
+///
 /// This is represented as a `u8` so that it can be cast
 /// to a `u8` using the `as` keyword
 #[repr(u8)]
@@ -42,6 +46,10 @@ pub enum GyroScale {
 
 /// The possible values for the `ACCEL_FS_SEL` field of
 /// the `ACCEL_CONFIG` register.
+///
+/// Instead of using numbers we defined this as an enum to
+/// make sure that users cannot use any other values
+/// than the these.
 ///
 /// This is represented as a `u8` so that it can be cast
 /// to a `u8` using the `as` keyword

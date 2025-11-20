@@ -48,7 +48,7 @@ async fn main(_spawner: Spawner) {
 
     // This is the buffer that is sent to the sensor. The format is:
     // | R/W REGISTER_ADDRESS | as many zeros as many data bytes we want to read |
-    // - R/W is the the first bit:
+    // - R/W is the the most significant bit (first bit):
     //  - 1 - read the register's value from the sensor
     //  - 0 - write a value to the sensor's register
     //
