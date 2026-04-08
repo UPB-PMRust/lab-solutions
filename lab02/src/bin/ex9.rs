@@ -67,7 +67,7 @@ async fn display_symbol(leds: &mut [Output<'_>; 3], morse_symbol: char) {
         // and it will panic if it tries to execute it.
         _ => panic!("Unknown mores code symbol {}", morse_symbol),
     }
-    Timer::after_secs(500).await;
+    Timer::after_millis(500).await;
 
     // Turn off all the LEDs
     //
