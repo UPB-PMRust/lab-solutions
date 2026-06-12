@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{error, info, warn}; // Removed `unwrap`
+use defmt::{error, info, warn};
 use defmt_rtt as _;
 use embassy_executor::Spawner;
 use embassy_stm32::{
